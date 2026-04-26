@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+option('wordnet_data_dir',
+  type: 'string',
+  value: '/usr/share/wordnet',
+  description: 'WordNet database directory used when WNSEARCHDIR and WNHOME are unset',
+)
+
+option('introspection',
+  type: 'feature',
+  value: 'auto',
+  description: 'Build the GObject Introspection data for libonym',
+)

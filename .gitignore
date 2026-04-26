@@ -1,0 +1,16 @@
+# Build output
+/_build/
+/build/
+
+# Compiled objects and libraries
+*.o
+*.lo
+*.a
+*.so
+*.so.*
+*.gir
+*.typelib
+
+# Editor and tooling
+compile_commands.json
+.cache/

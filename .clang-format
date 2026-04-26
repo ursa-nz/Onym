@@ -1,0 +1,5 @@
+# Onym C style: the GNU base that GTK and GLib use, with a slightly wider column limit.
+BasedOnStyle: GNU
+IndentWidth: 2
+ColumnLimit: 100
+SpaceBeforeParens: Always
