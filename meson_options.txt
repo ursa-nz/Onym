@@ -12,3 +12,9 @@ option('introspection',
   value: 'auto',
   description: 'Build the GObject Introspection data for libonym',
 )
+
+option('app',
+  type: 'feature',
+  value: 'auto',
+  description: 'Build the GTK4 and libadwaita application',
+)

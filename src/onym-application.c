@@ -1,0 +1,130 @@
+/* onym-application.c
+ *
+ * SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+/* The application object. On startup it loads the shared style sheet and installs the actions. On
+ * activation it presents the window. */
+
+#include "onym-application.h"
+#include "onym-window.h"
+
+struct _OnymApplication
+{
+  AdwApplication parent_instance;
+};
+
+G_DEFINE_FINAL_TYPE (OnymApplication, onym_application, ADW_TYPE_APPLICATION)
+
+OnymApplication *
+onym_application_new (void)
+{
+  return g_object_new (ONYM_TYPE_APPLICATION,
+                       "application-id", "nz.ursa.Onym",
+                       "flags", G_APPLICATION_HANDLES_COMMAND_LINE,
+                       NULL);
+}
+
+static void
+on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+  OnymApplication *self = user_data;
+  GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (self));
+
+  const char *developers[] = { "ursa.nz", NULL };
+  const char *data_credit[] = { "WordNet, Princeton University https://wordnet.princeton.edu", NULL };
+  const char *engine_credit[] = { "Derived from Artha by Sundaram Ramaswamy", NULL };
+
+  AdwAboutDialog *about = ADW_ABOUT_DIALOG (adw_about_dialog_new ());
+  adw_about_dialog_set_application_name (about, "Onym");
+  adw_about_dialog_set_application_icon (about, "nz.ursa.Onym");
+  adw_about_dialog_set_developer_name (about, "ursa.nz");
+  adw_about_dialog_set_version (about, ONYM_VERSION);
+  adw_about_dialog_set_license_type (about, GTK_LICENSE_GPL_3_0);
+  adw_about_dialog_set_website (about, "https://ursa.nz");
+  adw_about_dialog_set_comments (about, "A thesaurus and dictionary built on WordNet.");
+  adw_about_dialog_set_developers (about, developers);
+  adw_about_dialog_add_acknowledgement_section (about, "Word data", data_credit);
+  adw_about_dialog_add_acknowledgement_section (about, "Query engine", engine_credit);
+
+  adw_dialog_present (ADW_DIALOG (about), GTK_WIDGET (window));
+}
+
+static void
+on_quit_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+  g_application_quit (G_APPLICATION (user_data));
+}
+
+static const GActionEntry app_actions[] = {
+  { "about", on_about_action, NULL, NULL, NULL, { 0 } },
+  { "quit", on_quit_action, NULL, NULL, NULL, { 0 } },
+};
+
+static void
+onym_application_startup (GApplication *application)
+{
+  OnymApplication *self = ONYM_APPLICATION (application);
+
+  G_APPLICATION_CLASS (onym_application_parent_class)->startup (application);
+
+  GtkCssProvider *provider = gtk_css_provider_new ();
+  gtk_css_provider_load_from_resource (provider, "/nz/ursa/Onym/onym.css");
+  gtk_style_context_add_provider_for_display (gdk_display_get_default (),
+                                              GTK_STYLE_PROVIDER (provider),
+                                              GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+  g_object_unref (provider);
+
+  g_action_map_add_action_entries (G_ACTION_MAP (self), app_actions,
+                                   G_N_ELEMENTS (app_actions), self);
+
+  const char *quit_accels[] = { "<primary>q", NULL };
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.quit", quit_accels);
+}
+
+static void
+onym_application_activate (GApplication *application)
+{
+  GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (application));
+
+  if (window == NULL)
+    window = GTK_WINDOW (onym_window_new (ADW_APPLICATION (application)));
+
+  gtk_window_present (window);
+}
+
+/* Allow "onym WORD" to open the window already showing that word. With no argument it simply opens
+ * the welcome state. A second invocation forwards its word to the running instance. */
+static int
+onym_application_command_line (GApplication *application, GApplicationCommandLine *command_line)
+{
+  int argc = 0;
+  char **argv = g_application_command_line_get_arguments (command_line, &argc);
+
+  g_application_activate (application);
+
+  if (argc > 1)
+    {
+      GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (application));
+      onym_window_search (ONYM_WINDOW (window), argv[1]);
+    }
+
+  g_strfreev (argv);
+  return 0;
+}
+
+static void
+onym_application_class_init (OnymApplicationClass *klass)
+{
+  GApplicationClass *application_class = G_APPLICATION_CLASS (klass);
+
+  application_class->startup = onym_application_startup;
+  application_class->activate = onym_application_activate;
+  application_class->command_line = onym_application_command_line;
+}
+
+static void
+onym_application_init (OnymApplication *self)
+{
+}

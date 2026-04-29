@@ -63,7 +63,6 @@ pkgconfig.generate(libonym,
 
 gir_scanner = find_program('g-ir-scanner', required: get_option('introspection'))
 if gir_scanner.found()
-  gnome = import('gnome')
   gnome.generate_gir(libonym,
     sources: libonym_introspectable_sources + libonym_public_headers,
     namespace: 'Onym',
