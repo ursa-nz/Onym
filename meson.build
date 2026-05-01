@@ -43,5 +43,6 @@ build_app = gtk_dep.found() and adw_dep.found()
 subdir('libonym')
 subdir('tools')
 if build_app
+  subdir('data')
   subdir('src')
 endif
