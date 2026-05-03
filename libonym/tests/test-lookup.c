@@ -105,6 +105,35 @@ test_lookup_miss (void)
 }
 
 static void
+test_lookup_tree (void)
+{
+  if (!data_available ())
+    {
+      g_test_skip ("WordNet data not present");
+      return;
+    }
+
+  OnymEngine *engine = onym_engine_new ();
+  OnymResult *result = onym_engine_lookup (engine, "dog", NULL);
+
+  g_assert_nonnull (result);
+
+  OnymSection *tree = find_section (result, ONYM_SECTION_TREE);
+  g_assert_nonnull (tree);
+
+  GListModel *items = onym_section_get_items (tree);
+  g_assert_cmpuint (g_list_model_get_n_items (items), >, 0);
+
+  OnymTreeNode *root = g_list_model_get_item (items, 0);
+  g_assert_cmpuint (g_list_model_get_n_items (onym_tree_node_get_children (root)), >, 0);
+  g_object_unref (root);
+
+  g_object_unref (tree);
+  g_object_unref (result);
+  g_object_unref (engine);
+}
+
+static void
 test_complete (void)
 {
   if (!data_available ())
@@ -133,6 +162,7 @@ main (int argc, char **argv)
   g_test_add_func ("/onym/lookup/basic", test_lookup_basic);
   g_test_add_func ("/onym/lookup/morphology", test_lookup_morphology);
   g_test_add_func ("/onym/lookup/miss", test_lookup_miss);
+  g_test_add_func ("/onym/lookup/tree", test_lookup_tree);
   g_test_add_func ("/onym/lookup/complete", test_complete);
   return g_test_run ();
 }

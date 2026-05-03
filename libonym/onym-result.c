@@ -14,7 +14,8 @@
 G_DEFINE_ENUM_TYPE (OnymSectionKind, onym_section_kind,
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_DEFINITIONS, "definitions"),
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_WORDS, "words"),
-                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_ANTONYMS, "antonyms"))
+                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_ANTONYMS, "antonyms"),
+                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_TREE, "tree"))
 
 /* OnymWord */
 
@@ -211,6 +212,80 @@ onym_antonym_get_implications (OnymAntonym *self)
   return G_LIST_MODEL (self->implications);
 }
 
+/* OnymTreeNode */
+
+struct _OnymTreeNode
+{
+  GObject parent_instance;
+  char *label;
+  GListStore *children; /* of OnymTreeNode */
+};
+
+G_DEFINE_FINAL_TYPE (OnymTreeNode, onym_tree_node, G_TYPE_OBJECT)
+
+static void
+onym_tree_node_finalize (GObject *object)
+{
+  OnymTreeNode *self = ONYM_TREE_NODE (object);
+
+  g_free (self->label);
+  g_clear_object (&self->children);
+
+  G_OBJECT_CLASS (onym_tree_node_parent_class)->finalize (object);
+}
+
+static void
+onym_tree_node_class_init (OnymTreeNodeClass *klass)
+{
+  G_OBJECT_CLASS (klass)->finalize = onym_tree_node_finalize;
+}
+
+static void
+onym_tree_node_init (OnymTreeNode *self)
+{
+  self->children = g_list_store_new (ONYM_TYPE_TREE_NODE);
+}
+
+OnymTreeNode *
+onym_tree_node_new (const char *label)
+{
+  OnymTreeNode *self = g_object_new (ONYM_TYPE_TREE_NODE, NULL);
+  self->label = g_strdup (label);
+  return self;
+}
+
+void
+onym_tree_node_add_child (OnymTreeNode *self, OnymTreeNode *child)
+{
+  g_return_if_fail (ONYM_IS_TREE_NODE (self));
+  g_return_if_fail (ONYM_IS_TREE_NODE (child));
+
+  g_list_store_append (self->children, child);
+  g_object_unref (child);
+}
+
+const char *
+onym_tree_node_get_label (OnymTreeNode *self)
+{
+  g_return_val_if_fail (ONYM_IS_TREE_NODE (self), NULL);
+  return self->label;
+}
+
+/**
+ * onym_tree_node_get_children:
+ * @self: an OnymTreeNode
+ *
+ * The nodes one level deeper in the hierarchy.
+ *
+ * Returns: (transfer none): the children, a #GListModel of #OnymTreeNode
+ */
+GListModel *
+onym_tree_node_get_children (OnymTreeNode *self)
+{
+  g_return_val_if_fail (ONYM_IS_TREE_NODE (self), NULL);
+  return G_LIST_MODEL (self->children);
+}
+
 /* OnymSection */
 
 struct _OnymSection
@@ -234,6 +309,8 @@ onym_section_item_type (OnymSectionKind kind)
       return ONYM_TYPE_WORD;
     case ONYM_SECTION_ANTONYMS:
       return ONYM_TYPE_ANTONYM;
+    case ONYM_SECTION_TREE:
+      return ONYM_TYPE_TREE_NODE;
     default:
       g_assert_not_reached ();
     }

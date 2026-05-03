@@ -79,6 +79,35 @@ print_antonyms (GListModel *items)
 }
 
 static void
+print_tree_node (OnymTreeNode *node, int depth)
+{
+  for (int i = 0; i <= depth; i++)
+    g_print ("  ");
+  g_print ("- %s\n", onym_tree_node_get_label (node));
+
+  GListModel *children = onym_tree_node_get_children (node);
+  guint n = g_list_model_get_n_items (children);
+  for (guint i = 0; i < n; i++)
+    {
+      OnymTreeNode *child = g_list_model_get_item (children, i);
+      print_tree_node (child, depth + 1);
+      g_object_unref (child);
+    }
+}
+
+static void
+print_tree (GListModel *items)
+{
+  guint n = g_list_model_get_n_items (items);
+  for (guint i = 0; i < n; i++)
+    {
+      OnymTreeNode *root = g_list_model_get_item (items, i);
+      print_tree_node (root, 0);
+      g_object_unref (root);
+    }
+}
+
+static void
 render_result (OnymResult *result)
 {
   g_print ("term: %s\n", onym_result_get_term (result));
@@ -101,6 +130,9 @@ render_result (OnymResult *result)
           break;
         case ONYM_SECTION_ANTONYMS:
           print_antonyms (items);
+          break;
+        case ONYM_SECTION_TREE:
+          print_tree (items);
           break;
         default:
           break;

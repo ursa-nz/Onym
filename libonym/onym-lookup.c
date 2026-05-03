@@ -13,9 +13,12 @@
  *   OVERVIEW synonyms     -> a Synonyms section of OnymWord
  *   ANTONYMS              -> an Antonyms section of OnymAntonym, direct and indirect
  *   DERIVATIONS, SIMILAR, ATTRIBUTES, CAUSES, ENTAILS -> Words sections of OnymWord
+ *   PERTAINYMS, HYPERNYMS, HYPONYMS, HOLONYMS, MERONYMS -> Tree sections of OnymTreeNode
+ *   CLASS                 -> a Domains words section
  *
- * The is a kind of, part of, and domain relations are added in a later phase, along with their tree
- * rendering. The model already carries the section order, so display order is decided here. */
+ * The tree relations arrive as GNode hierarchies, grown to full depth only in advanced mode, so the
+ * lookup requests advanced mode. The model carries the section order, so display order is decided
+ * here. */
 
 #include "onym-lookup.h"
 #include "onym-result-private.h"
@@ -23,11 +26,8 @@
 
 #include "engine/wni.h"
 
-/* The relations requested for a lookup. Trees and domains are added with their phase. */
-#define ONYM_LOOKUP_FLAGS                                                                          \
-  (WORDNET_INTERFACE_OVERVIEW | WORDNET_INTERFACE_ANTONYMS | WORDNET_INTERFACE_DERIVATIONS         \
-   | WORDNET_INTERFACE_SIMILAR | WORDNET_INTERFACE_ATTRIBUTES | WORDNET_INTERFACE_CAUSES           \
-   | WORDNET_INTERFACE_ENTAILS)
+/* Every relation the model can present. */
+#define ONYM_LOOKUP_FLAGS WORDNET_INTERFACE_ALL
 
 /* Map a WordNet part of speech code to a display name. */
 static const char *
@@ -200,6 +200,93 @@ add_relation (OnymResult *out, GSList *results, WNIRequestFlags id, const char *
     add_words (out, title, ((WNIProperties *) nym->data)->properties_list);
 }
 
+/* Convert one engine GNode, whose data is a WNITreeList of synset terms, into an OnymTreeNode,
+ * recursing into its children. */
+static OnymTreeNode *
+convert_gnode (GNode *node)
+{
+  WNITreeList *list = node->data;
+
+  GString *label = g_string_new (NULL);
+  for (GSList *l = (list != NULL) ? list->word_list : NULL; l != NULL; l = l->next)
+    {
+      WNIImplication *implication = l->data;
+      if (implication == NULL || implication->term == NULL)
+        continue;
+      if (label->len > 0)
+        g_string_append (label, ", ");
+      char *display = onym_term_to_display (implication->term);
+      g_string_append (label, display);
+      g_free (display);
+    }
+
+  OnymTreeNode *out = onym_tree_node_new (label->str);
+  g_string_free (label, TRUE);
+
+  for (GNode *child = g_node_first_child (node); child != NULL; child = g_node_next_sibling (child))
+    onym_tree_node_add_child (out, convert_gnode (child));
+
+  return out;
+}
+
+/* Add a hierarchical relation section. Each engine property is a GNode root, one per sense, whose
+ * children are the top level nodes. Top level nodes are deduplicated by label across senses. */
+static void
+add_tree (OnymResult *out, GSList *results, WNIRequestFlags id, const char *title)
+{
+  WNINym *nym = find_nym (results, id);
+  if (nym == NULL || nym->data == NULL)
+    return;
+
+  OnymSection *section = onym_section_new (ONYM_SECTION_TREE, title);
+  GHashTable *seen = g_hash_table_new (g_str_hash, g_str_equal);
+
+  for (GSList *l = ((WNIProperties *) nym->data)->properties_list; l != NULL; l = l->next)
+    {
+      GNode *root = l->data;
+      if (root == NULL)
+        continue;
+
+      for (GNode *child = g_node_first_child (root); child != NULL;
+           child = g_node_next_sibling (child))
+        {
+          OnymTreeNode *node = convert_gnode (child);
+          const char *label = onym_tree_node_get_label (node);
+          if (label != NULL && g_hash_table_contains (seen, label))
+            {
+              g_object_unref (node);
+              continue;
+            }
+          g_hash_table_add (seen, (gpointer) label);
+          onym_section_add (section, node);
+        }
+    }
+
+  g_hash_table_destroy (seen);
+  add_section_if_filled (out, section);
+}
+
+/* Add the domain or category terms as a words section. */
+static void
+add_domains (OnymResult *out, GSList *results)
+{
+  WNINym *nym = find_nym (results, WORDNET_INTERFACE_CLASS);
+  if (nym == NULL || nym->data == NULL)
+    return;
+
+  OnymSection *section = onym_section_new (ONYM_SECTION_WORDS, "Domains");
+  for (GSList *l = ((WNIProperties *) nym->data)->properties_list; l != NULL; l = l->next)
+    {
+      WNIClassItem *item = l->data;
+      if (item == NULL || item->term == NULL)
+        continue;
+      char *display = onym_term_to_display (item->term);
+      onym_section_add (section, onym_word_new (display));
+      g_free (display);
+    }
+  add_section_if_filled (out, section);
+}
+
 OnymResult *
 onym_bridge_lookup (const char *query)
 {
@@ -208,7 +295,7 @@ onym_bridge_lookup (const char *query)
   /* The engine may write to the search string, so hand it a copy. */
   char *search = g_strdup (query);
   GSList *results = NULL;
-  gboolean found = wni_request_nyms (search, &results, ONYM_LOOKUP_FLAGS, FALSE);
+  gboolean found = wni_request_nyms (search, &results, ONYM_LOOKUP_FLAGS, TRUE);
   g_free (search);
 
   if (!found || results == NULL)
@@ -239,6 +326,13 @@ onym_bridge_lookup (const char *query)
   add_relation (out, results, WORDNET_INTERFACE_ATTRIBUTES, "Attributes");
   add_relation (out, results, WORDNET_INTERFACE_CAUSES, "Causes");
   add_relation (out, results, WORDNET_INTERFACE_ENTAILS, "Entails");
+
+  add_tree (out, results, WORDNET_INTERFACE_PERTAINYMS, "Pertains to");
+  add_tree (out, results, WORDNET_INTERFACE_HYPERNYMS, "Is a kind of");
+  add_tree (out, results, WORDNET_INTERFACE_HYPONYMS, "Kinds");
+  add_tree (out, results, WORDNET_INTERFACE_HOLONYMS, "Part of");
+  add_tree (out, results, WORDNET_INTERFACE_MERONYMS, "Parts");
+  add_domains (out, results);
 
   wni_free (&results);
   return out;

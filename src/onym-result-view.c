@@ -146,6 +146,55 @@ make_definitions (GListModel *items)
   return GTK_WIDGET (box);
 }
 
+/* One node of a relation tree. A node with children becomes a collapsible expander whose children
+ * are indented; a leaf is a plain wrapping label. The first level is expanded by default. */
+static GtkWidget *
+make_tree_node (OnymTreeNode *node, int depth)
+{
+  GListModel *children = onym_tree_node_get_children (node);
+  guint n = g_list_model_get_n_items (children);
+
+  GtkWidget *label = gtk_label_new (onym_tree_node_get_label (node));
+  gtk_label_set_xalign (GTK_LABEL (label), 0.0);
+  gtk_label_set_wrap (GTK_LABEL (label), TRUE);
+
+  if (n == 0)
+    return label;
+
+  GtkWidget *expander = gtk_expander_new (NULL);
+  gtk_expander_set_label_widget (GTK_EXPANDER (expander), label);
+  gtk_expander_set_expanded (GTK_EXPANDER (expander), depth < 1);
+
+  GtkWidget *child_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 4);
+  gtk_widget_set_margin_start (child_box, 16);
+  gtk_widget_set_margin_top (child_box, 4);
+  for (guint i = 0; i < n; i++)
+    {
+      OnymTreeNode *child = g_list_model_get_item (children, i);
+      gtk_box_append (GTK_BOX (child_box), make_tree_node (child, depth + 1));
+      g_object_unref (child);
+    }
+  gtk_expander_set_child (GTK_EXPANDER (expander), child_box);
+
+  return expander;
+}
+
+static GtkWidget *
+make_tree (OnymSection *section)
+{
+  GtkBox *box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 4));
+
+  GListModel *items = onym_section_get_items (section);
+  guint n = g_list_model_get_n_items (items);
+  for (guint i = 0; i < n; i++)
+    {
+      OnymTreeNode *root = g_list_model_get_item (items, i);
+      gtk_box_append (box, make_tree_node (root, 0));
+      g_object_unref (root);
+    }
+  return GTK_WIDGET (box);
+}
+
 void
 onym_result_view_set_result (OnymResultView *self, OnymResult *result)
 {
@@ -176,6 +225,9 @@ onym_result_view_set_result (OnymResultView *self, OnymResult *result)
         case ONYM_SECTION_WORDS:
         case ONYM_SECTION_ANTONYMS:
           gtk_box_append (self->box, make_chip_flow (self, section));
+          break;
+        case ONYM_SECTION_TREE:
+          gtk_box_append (self->box, make_tree (section));
           break;
         default:
           break;

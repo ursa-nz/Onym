@@ -22,6 +22,7 @@ typedef enum
   ONYM_SECTION_DEFINITIONS, /* items are OnymDefinition */
   ONYM_SECTION_WORDS,       /* items are OnymWord */
   ONYM_SECTION_ANTONYMS,    /* items are OnymAntonym */
+  ONYM_SECTION_TREE,        /* items are OnymTreeNode */
 } OnymSectionKind;
 
 GType onym_section_kind_get_type (void);
@@ -51,6 +52,14 @@ G_DECLARE_FINAL_TYPE (OnymAntonym, onym_antonym, ONYM, ANTONYM, GObject)
 const char *onym_antonym_get_term         (OnymAntonym *self);
 gboolean    onym_antonym_get_direct       (OnymAntonym *self);
 GListModel *onym_antonym_get_implications (OnymAntonym *self); /* of OnymWord */
+
+/* OnymTreeNode: one node of a lexical hierarchy, such as an is-a or part-of relation. The label is
+ * the node's synset terms joined for display. Children are the nodes one level deeper. */
+#define ONYM_TYPE_TREE_NODE (onym_tree_node_get_type ())
+G_DECLARE_FINAL_TYPE (OnymTreeNode, onym_tree_node, ONYM, TREE_NODE, GObject)
+
+const char *onym_tree_node_get_label    (OnymTreeNode *self);
+GListModel *onym_tree_node_get_children (OnymTreeNode *self); /* of OnymTreeNode */
 
 /* OnymSection: a titled group of items of one kind. */
 #define ONYM_TYPE_SECTION (onym_section_get_type ())
