@@ -4,16 +4,21 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-/* The main window. It owns an OnymEngine and runs a lookup when the user presses Enter, activates a
- * word, picks a recent word, or steps through history. It keeps a navigation stack for back and
- * forward, a deduplicated recent words list in GSettings, and it remembers its size. */
+/* The main window. It owns an OnymEngine and drives lookups from the search field, from word and
+ * recent activations, and from history. Search is live: each keystroke updates a completion popover
+ * drawn from the WordNet index and, after a short pause, looks the word up silently. Pressing Enter,
+ * choosing a completion, or clicking a word or suggestion is a committed lookup that records history
+ * and recent words. */
 
 #include "onym-window.h"
 #include "onym-result-view.h"
 
+#include <gdk/gdkkeysyms.h>
 #include <onym.h>
 
 #define ONYM_RECENT_LIMIT 10
+#define ONYM_COMPLETION_MAX 8
+#define ONYM_DEBOUNCE_MS 250
 
 struct _OnymWindow
 {
@@ -31,9 +36,15 @@ struct _OnymWindow
   GPtrArray *history; /* resolved headwords, in visit order */
   int history_pos;    /* index of the current word, or -1 */
 
-  GMenu *recents_menu;          /* the dynamic section of the primary menu */
-  GSimpleAction *back_action;   /* borrowed; owned by the action map */
+  GMenu *recents_menu;
+  GSimpleAction *back_action;
   GSimpleAction *forward_action;
+
+  GtkPopover *completion_popover;
+  GtkListBox *completion_list;
+  guint completion_count;
+  guint debounce_id;
+  gboolean suppress_changed; /* true while we set the entry text ourselves */
 };
 
 G_DEFINE_FINAL_TYPE (OnymWindow, onym_window, ADW_TYPE_APPLICATION_WINDOW)
@@ -42,6 +53,15 @@ OnymWindow *
 onym_window_new (AdwApplication *application)
 {
   return g_object_new (ONYM_TYPE_WINDOW, "application", application, NULL);
+}
+
+/* Set the search text without retriggering the live search handler. */
+static void
+set_entry_text (OnymWindow *self, const char *text)
+{
+  self->suppress_changed = TRUE;
+  gtk_editable_set_text (GTK_EDITABLE (self->search_entry), text);
+  self->suppress_changed = FALSE;
 }
 
 static void
@@ -112,15 +132,72 @@ push_history (OnymWindow *self, const char *term)
   update_history_actions (self);
 }
 
-/* Look @word up and show the matching page. When @record is true the resolved headword is pushed
- * onto the history and added to the recent words. History navigation passes false. */
 static void
-show_word (OnymWindow *self, const char *word, gboolean record)
+display_result (OnymWindow *self, OnymResult *result)
+{
+  onym_result_view_set_result (self->result_view, result);
+  gtk_stack_set_visible_child_name (self->stack, "result");
+}
+
+/* Build a flow of clickable suggestion chips, each wired to the win.lookup action. */
+static GtkWidget *
+build_suggestions (char **suggestions)
+{
+  GtkWidget *flow = gtk_flow_box_new ();
+  gtk_flow_box_set_selection_mode (GTK_FLOW_BOX (flow), GTK_SELECTION_NONE);
+  gtk_widget_set_halign (flow, GTK_ALIGN_CENTER);
+  gtk_flow_box_set_column_spacing (GTK_FLOW_BOX (flow), 6);
+  gtk_flow_box_set_row_spacing (GTK_FLOW_BOX (flow), 6);
+
+  for (guint i = 0; suggestions[i] != NULL; i++)
+    {
+      GtkWidget *button = gtk_button_new_with_label (suggestions[i]);
+      gtk_widget_add_css_class (button, "flat");
+      gtk_widget_add_css_class (button, "word-chip");
+      gtk_actionable_set_action_name (GTK_ACTIONABLE (button), "win.lookup");
+      gtk_actionable_set_action_target_value (GTK_ACTIONABLE (button),
+                                              g_variant_new_string (suggestions[i]));
+      gtk_flow_box_append (GTK_FLOW_BOX (flow), button);
+    }
+  return flow;
+}
+
+static void
+show_not_found (OnymWindow *self, const char *word)
+{
+  set_entry_text (self, word);
+
+  char *title = g_strdup_printf ("No entry for \"%s\"", word);
+  adw_status_page_set_title (self->notfound_page, title);
+  g_free (title);
+
+  char **suggestions = onym_engine_suggest (self->engine, word, 5);
+  if (suggestions[0] != NULL)
+    {
+      adw_status_page_set_description (self->notfound_page, "Did you mean");
+      adw_status_page_set_child (self->notfound_page, build_suggestions (suggestions));
+    }
+  else
+    {
+      adw_status_page_set_description (self->notfound_page, NULL);
+      adw_status_page_set_child (self->notfound_page, NULL);
+    }
+  g_strfreev (suggestions);
+
+  gtk_stack_set_visible_child_name (self->stack, "notfound");
+}
+
+/* Look @word up and show it. @record pushes the resolved headword onto the history and recent words.
+ * @show_miss decides whether a miss shows the not-found page or is silently ignored, which is how
+ * the live, as-you-type path avoids flashing not-found on partial words. */
+static void
+show_word (OnymWindow *self, const char *word, gboolean record, gboolean show_miss)
 {
   char *trimmed = g_strstrip (g_strdup (word));
   if (*trimmed == '\0')
     {
-      gtk_stack_set_visible_child_name (self->stack, "welcome");
+      if (show_miss)
+        gtk_stack_set_visible_child_name (self->stack, "welcome");
       g_free (trimmed);
       return;
     }
@@ -130,44 +207,22 @@ show_word (OnymWindow *self, const char *word, gboolean record)
 
   if (error != NULL)
     {
-      gtk_editable_set_text (GTK_EDITABLE (self->search_entry), trimmed);
       adw_status_page_set_title (self->notfound_page, "Database not found");
       adw_status_page_set_description (self->notfound_page, error->message);
+      adw_status_page_set_child (self->notfound_page, NULL);
       gtk_stack_set_visible_child_name (self->stack, "notfound");
       g_error_free (error);
     }
   else if (result == NULL)
     {
-      gtk_editable_set_text (GTK_EDITABLE (self->search_entry), trimmed);
-
-      char *title = g_strdup_printf ("No entry for \"%s\"", trimmed);
-      adw_status_page_set_title (self->notfound_page, title);
-      g_free (title);
-
-      char **suggestions = onym_engine_suggest (self->engine, trimmed, 5);
-      if (suggestions[0] != NULL)
-        {
-          char *joined = g_strjoinv (", ", suggestions);
-          char *description = g_strdup_printf ("Did you mean: %s", joined);
-          adw_status_page_set_description (self->notfound_page, description);
-          g_free (description);
-          g_free (joined);
-        }
-      else
-        {
-          adw_status_page_set_description (self->notfound_page, NULL);
-        }
-      g_strfreev (suggestions);
-
-      gtk_stack_set_visible_child_name (self->stack, "notfound");
+      if (show_miss)
+        show_not_found (self, trimmed);
     }
   else
     {
       const char *term = onym_result_get_term (result);
-      gtk_editable_set_text (GTK_EDITABLE (self->search_entry), term);
-      onym_result_view_set_result (self->result_view, result);
-      gtk_stack_set_visible_child_name (self->stack, "result");
-
+      set_entry_text (self, term);
+      display_result (self, result);
       if (record)
         {
           push_history (self, term);
@@ -184,26 +239,172 @@ onym_window_search (OnymWindow *self, const char *word)
 {
   g_return_if_fail (ONYM_IS_WINDOW (self));
 
-  show_word (self, word, TRUE);
+  show_word (self, word, TRUE, TRUE);
+}
+
+/* Completion popover. */
+
+static void
+hide_completions (OnymWindow *self)
+{
+  gtk_popover_popdown (self->completion_popover);
+  gtk_accessible_reset_relation (GTK_ACCESSIBLE (self->search_entry),
+                                 GTK_ACCESSIBLE_RELATION_ACTIVE_DESCENDANT);
+}
+
+static void
+accept_completion (OnymWindow *self, const char *word)
+{
+  hide_completions (self);
+  set_entry_text (self, word);
+  show_word (self, word, TRUE, TRUE);
+}
+
+static void
+update_completions (OnymWindow *self)
+{
+  GtkListBoxRow *row;
+  while ((row = gtk_list_box_get_row_at_index (self->completion_list, 0)) != NULL)
+    gtk_list_box_remove (self->completion_list, GTK_WIDGET (row));
+  self->completion_count = 0;
+
+  char *typed = g_strstrip (g_strdup (gtk_editable_get_text (GTK_EDITABLE (self->search_entry))));
+  char **matches = (*typed != '\0') ? onym_engine_complete (self->engine, typed, ONYM_COMPLETION_MAX)
+                                     : g_new0 (char *, 1);
+
+  for (guint i = 0; matches[i] != NULL; i++)
+    {
+      GtkWidget *label = gtk_label_new (matches[i]);
+      gtk_label_set_xalign (GTK_LABEL (label), 0.0);
+      gtk_widget_set_margin_start (label, 6);
+      gtk_widget_set_margin_end (label, 6);
+
+      GtkWidget *list_row = gtk_list_box_row_new ();
+      gtk_list_box_row_set_child (GTK_LIST_BOX_ROW (list_row), label);
+      g_object_set_data_full (G_OBJECT (list_row), "term", g_strdup (matches[i]), g_free);
+      gtk_list_box_append (self->completion_list, list_row);
+      self->completion_count++;
+    }
+
+  /* Hide the popover when there is nothing to add, or only the exact word the user already typed. */
+  gboolean only_exact = self->completion_count == 1 && g_ascii_strcasecmp (matches[0], typed) == 0;
+  if (self->completion_count > 0 && !only_exact)
+    gtk_popover_popup (self->completion_popover);
+  else
+    hide_completions (self);
+
+  g_strfreev (matches);
+  g_free (typed);
+}
+
+static gboolean
+on_debounce (gpointer user_data)
+{
+  OnymWindow *self = user_data;
+  self->debounce_id = 0;
+
+  char *typed = g_strstrip (g_strdup (gtk_editable_get_text (GTK_EDITABLE (self->search_entry))));
+  if (*typed != '\0')
+    {
+      OnymResult *result = onym_engine_lookup (self->engine, typed, NULL);
+      if (result != NULL)
+        {
+          display_result (self, result);
+          g_object_unref (result);
+        }
+    }
+  g_free (typed);
+  return G_SOURCE_REMOVE;
+}
+
+static void
+on_search_changed (GtkSearchEntry *entry, OnymWindow *self)
+{
+  if (self->suppress_changed)
+    return;
+
+  update_completions (self);
+
+  g_clear_handle_id (&self->debounce_id, g_source_remove);
+  self->debounce_id = g_timeout_add (ONYM_DEBOUNCE_MS, on_debounce, self);
+}
+
+static void
+select_relative (OnymWindow *self, int delta)
+{
+  if (self->completion_count == 0)
+    return;
+
+  GtkListBoxRow *current = gtk_list_box_get_selected_row (self->completion_list);
+  int index = current != NULL ? gtk_list_box_row_get_index (current) : (delta > 0 ? -1 : 0);
+  int next = CLAMP (index + delta, 0, (int) self->completion_count - 1);
+
+  GtkListBoxRow *row = gtk_list_box_get_row_at_index (self->completion_list, next);
+  gtk_list_box_select_row (self->completion_list, row);
+  if (row != NULL)
+    gtk_accessible_update_relation (GTK_ACCESSIBLE (self->search_entry),
+                                    GTK_ACCESSIBLE_RELATION_ACTIVE_DESCENDANT,
+                                    GTK_ACCESSIBLE (row), -1);
+}
+
+static gboolean
+on_entry_key_pressed (GtkEventControllerKey *controller, guint keyval, guint keycode,
+                      GdkModifierType state, OnymWindow *self)
+{
+  if (!gtk_widget_get_mapped (GTK_WIDGET (self->completion_popover)))
+    return FALSE;
+
+  switch (keyval)
+    {
+    case GDK_KEY_Down:
+      select_relative (self, 1);
+      return TRUE;
+    case GDK_KEY_Up:
+      select_relative (self, -1);
+      return TRUE;
+    case GDK_KEY_Escape:
+      hide_completions (self);
+      return TRUE;
+    case GDK_KEY_Return:
+    case GDK_KEY_KP_Enter:
+      {
+        GtkListBoxRow *row = gtk_list_box_get_selected_row (self->completion_list);
+        if (row != NULL)
+          {
+            accept_completion (self, g_object_get_data (G_OBJECT (row), "term"));
+            return TRUE;
+          }
+        return FALSE;
+      }
+    default:
+      return FALSE;
+    }
+}
+
+static void
+on_completion_row_activated (GtkListBox *list, GtkListBoxRow *row, OnymWindow *self)
+{
+  accept_completion (self, g_object_get_data (G_OBJECT (row), "term"));
 }
 
 static void
 on_search_activate (GtkSearchEntry *entry, OnymWindow *self)
 {
-  show_word (self, gtk_editable_get_text (GTK_EDITABLE (entry)), TRUE);
+  hide_completions (self);
+  show_word (self, gtk_editable_get_text (GTK_EDITABLE (entry)), TRUE, TRUE);
 }
 
 static void
 on_word_activated (OnymResultView *view, const char *term, OnymWindow *self)
 {
-  show_word (self, term, TRUE);
+  show_word (self, term, TRUE, TRUE);
 }
 
 static void
 on_lookup_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
   OnymWindow *self = user_data;
-  show_word (self, g_variant_get_string (parameter, NULL), TRUE);
+  show_word (self, g_variant_get_string (parameter, NULL), TRUE, TRUE);
 }
 
 static void
@@ -213,7 +414,7 @@ on_history_back (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   if (self->history_pos > 0)
     {
       self->history_pos--;
-      show_word (self, g_ptr_array_index (self->history, self->history_pos), FALSE);
+      show_word (self, g_ptr_array_index (self->history, self->history_pos), FALSE, TRUE);
       update_history_actions (self);
     }
 }
@@ -225,7 +426,7 @@ on_history_forward (GSimpleAction *action, GVariant *parameter, gpointer user_da
   if (self->history_pos < (int) self->history->len - 1)
     {
       self->history_pos++;
-      show_word (self, g_ptr_array_index (self->history, self->history_pos), FALSE);
+      show_word (self, g_ptr_array_index (self->history, self->history_pos), FALSE, TRUE);
       update_history_actions (self);
     }
 }
@@ -273,6 +474,37 @@ build_primary_menu (OnymWindow *self)
 }
 
 static void
+build_completion_popover (OnymWindow *self)
+{
+  self->completion_popover = GTK_POPOVER (gtk_popover_new ());
+  gtk_widget_set_parent (GTK_WIDGET (self->completion_popover), GTK_WIDGET (self->search_entry));
+  gtk_popover_set_autohide (self->completion_popover, FALSE);
+  gtk_popover_set_has_arrow (self->completion_popover, FALSE);
+  gtk_popover_set_position (self->completion_popover, GTK_POS_BOTTOM);
+  gtk_widget_set_halign (GTK_WIDGET (self->completion_popover), GTK_ALIGN_START);
+  gtk_widget_add_css_class (GTK_WIDGET (self->completion_popover), "menu");
+
+  GtkWidget *scroller = gtk_scrolled_window_new ();
+  gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller), GTK_POLICY_NEVER,
+                                  GTK_POLICY_AUTOMATIC);
+  gtk_scrolled_window_set_max_content_height (GTK_SCROLLED_WINDOW (scroller), 280);
+  gtk_scrolled_window_set_propagate_natural_height (GTK_SCROLLED_WINDOW (scroller), TRUE);
+  gtk_widget_set_size_request (scroller, 240, -1);
+
+  self->completion_list = GTK_LIST_BOX (gtk_list_box_new ());
+  gtk_list_box_set_selection_mode (self->completion_list, GTK_SELECTION_BROWSE);
+  g_signal_connect (self->completion_list, "row-activated",
+                    G_CALLBACK (on_completion_row_activated), self);
+
+  gtk_scrolled_window_set_child (GTK_SCROLLED_WINDOW (scroller), GTK_WIDGET (self->completion_list));
+  gtk_popover_set_child (self->completion_popover, scroller);
+
+  /* Tell assistive technology the field offers completions. */
+  gtk_accessible_update_property (GTK_ACCESSIBLE (self->search_entry),
+                                  GTK_ACCESSIBLE_PROPERTY_HAS_POPUP, TRUE, -1);
+}
+
+static void
 restore_window_state (OnymWindow *self)
 {
   gtk_window_set_default_size (GTK_WINDOW (self),
@@ -287,6 +519,8 @@ onym_window_dispose (GObject *object)
 {
   OnymWindow *self = ONYM_WINDOW (object);
 
+  g_clear_handle_id (&self->debounce_id, g_source_remove);
+  g_clear_pointer ((GtkWidget **) &self->completion_popover, gtk_widget_unparent);
   g_clear_object (&self->engine);
   g_clear_object (&self->settings);
   g_clear_object (&self->recents_menu);
@@ -335,7 +569,14 @@ onym_window_init (OnymWindow *self)
 
   build_primary_menu (self);
   rebuild_recents_menu (self);
+  build_completion_popover (self);
 
+  GtkEventController *keys = gtk_event_controller_key_new ();
+  gtk_event_controller_set_propagation_phase (keys, GTK_PHASE_CAPTURE);
+  g_signal_connect (keys, "key-pressed", G_CALLBACK (on_entry_key_pressed), self);
+  gtk_widget_add_controller (GTK_WIDGET (self->search_entry), keys);
+
+  g_signal_connect (self->search_entry, "search-changed", G_CALLBACK (on_search_changed), self);
   g_signal_connect (self->search_entry, "activate", G_CALLBACK (on_search_activate), self);
   g_signal_connect (self->result_view, "word-activated", G_CALLBACK (on_word_activated), self);
   g_signal_connect (self, "close-request", G_CALLBACK (on_close_request), NULL);
