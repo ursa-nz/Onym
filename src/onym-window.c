@@ -49,6 +49,8 @@ struct _OnymWindow
 
 G_DEFINE_FINAL_TYPE (OnymWindow, onym_window, ADW_TYPE_APPLICATION_WINDOW)
 
+static void hide_completions (OnymWindow *self);
+
 OnymWindow *
 onym_window_new (AdwApplication *application)
 {
@@ -193,6 +195,8 @@ show_not_found (OnymWindow *self, const char *word)
 static void
 show_word (OnymWindow *self, const char *word, gboolean record, gboolean show_miss)
 {
+  hide_completions (self);
+
   char *trimmed = g_strstrip (g_strdup (word));
   if (*trimmed == '\0')
     {
@@ -576,7 +580,7 @@ onym_window_init (OnymWindow *self)
   g_signal_connect (keys, "key-pressed", G_CALLBACK (on_entry_key_pressed), self);
   gtk_widget_add_controller (GTK_WIDGET (self->search_entry), keys);
 
-  g_signal_connect (self->search_entry, "search-changed", G_CALLBACK (on_search_changed), self);
+  g_signal_connect (self->search_entry, "changed", G_CALLBACK (on_search_changed), self);
   g_signal_connect (self->search_entry, "activate", G_CALLBACK (on_search_activate), self);
   g_signal_connect (self->result_view, "word-activated", G_CALLBACK (on_word_activated), self);
   g_signal_connect (self, "close-request", G_CALLBACK (on_close_request), NULL);
