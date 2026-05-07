@@ -53,13 +53,15 @@ const char *onym_antonym_get_term         (OnymAntonym *self);
 gboolean    onym_antonym_get_direct       (OnymAntonym *self);
 GListModel *onym_antonym_get_implications (OnymAntonym *self); /* of OnymWord */
 
-/* OnymTreeNode: one node of a lexical hierarchy, such as an is-a or part-of relation. The label is
- * the node's synset terms joined for display. Children are the nodes one level deeper. */
+/* OnymTreeNode: one node of a lexical hierarchy, such as an is-a or part-of relation. A node is one
+ * synset, so it carries several terms; each is a word that can be looked up. The label is those terms
+ * joined for display. Children are the nodes one level deeper. */
 #define ONYM_TYPE_TREE_NODE (onym_tree_node_get_type ())
 G_DECLARE_FINAL_TYPE (OnymTreeNode, onym_tree_node, ONYM, TREE_NODE, GObject)
 
-const char *onym_tree_node_get_label    (OnymTreeNode *self);
-GListModel *onym_tree_node_get_children (OnymTreeNode *self); /* of OnymTreeNode */
+const char         *onym_tree_node_get_label    (OnymTreeNode *self);
+const char * const *onym_tree_node_get_terms    (OnymTreeNode *self);
+GListModel         *onym_tree_node_get_children (OnymTreeNode *self); /* of OnymTreeNode */
 
 /* OnymSection: a titled group of items of one kind. */
 #define ONYM_TYPE_SECTION (onym_section_get_type ())

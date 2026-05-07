@@ -20,7 +20,7 @@ OnymDefinition *onym_definition_new (const char *pos, const char *gloss, GStrv e
 OnymAntonym *onym_antonym_new             (const char *term, gboolean direct);
 void         onym_antonym_add_implication (OnymAntonym *self, const char *term);
 
-OnymTreeNode *onym_tree_node_new       (const char *label);
+OnymTreeNode *onym_tree_node_new       (GStrv terms); /* (transfer full) terms */
 void          onym_tree_node_add_child (OnymTreeNode *self, OnymTreeNode *child); /* (transfer full) */
 
 OnymSection *onym_section_new (OnymSectionKind kind, const char *title);

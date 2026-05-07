@@ -207,21 +207,19 @@ convert_gnode (GNode *node)
 {
   WNITreeList *list = node->data;
 
-  GString *label = g_string_new (NULL);
+  GStrvBuilder *builder = g_strv_builder_new ();
   for (GSList *l = (list != NULL) ? list->word_list : NULL; l != NULL; l = l->next)
     {
       WNIImplication *implication = l->data;
       if (implication == NULL || implication->term == NULL)
         continue;
-      if (label->len > 0)
-        g_string_append (label, ", ");
       char *display = onym_term_to_display (implication->term);
-      g_string_append (label, display);
+      g_strv_builder_add (builder, display);
       g_free (display);
     }
 
-  OnymTreeNode *out = onym_tree_node_new (label->str);
-  g_string_free (label, TRUE);
+  OnymTreeNode *out = onym_tree_node_new (g_strv_builder_end (builder));
+  g_strv_builder_unref (builder);
 
   for (GNode *child = g_node_first_child (node); child != NULL; child = g_node_next_sibling (child))
     onym_tree_node_add_child (out, convert_gnode (child));

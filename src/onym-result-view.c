@@ -146,23 +146,39 @@ make_definitions (GListModel *items)
   return GTK_WIDGET (box);
 }
 
-/* One node of a relation tree. A node with children becomes a collapsible expander whose children
- * are indented; a leaf is a plain wrapping label. The first level is expanded by default. */
+/* A node's synset terms, each as a clickable chip, so any related word can be looked up. */
 static GtkWidget *
-make_tree_node (OnymTreeNode *node, int depth)
+make_tree_terms (OnymResultView *self, OnymTreeNode *node)
+{
+  GtkFlowBox *flow = GTK_FLOW_BOX (gtk_flow_box_new ());
+  gtk_flow_box_set_selection_mode (flow, GTK_SELECTION_NONE);
+  gtk_flow_box_set_column_spacing (flow, 4);
+  gtk_flow_box_set_row_spacing (flow, 4);
+  gtk_flow_box_set_max_children_per_line (flow, 1000);
+  gtk_widget_set_halign (GTK_WIDGET (flow), GTK_ALIGN_START);
+
+  const char * const *terms = onym_tree_node_get_terms (node);
+  for (guint i = 0; terms != NULL && terms[i] != NULL; i++)
+    gtk_flow_box_append (flow, make_chip (self, terms[i]));
+
+  return GTK_WIDGET (flow);
+}
+
+/* One node of a relation tree. A node with children becomes a collapsible expander whose chips form
+ * the header and whose children are indented; a leaf is just its chips. The first level is expanded
+ * by default. Clicking a chip looks that word up; clicking the triangle expands. */
+static GtkWidget *
+make_tree_node (OnymResultView *self, OnymTreeNode *node, int depth)
 {
   GListModel *children = onym_tree_node_get_children (node);
   guint n = g_list_model_get_n_items (children);
 
-  GtkWidget *label = gtk_label_new (onym_tree_node_get_label (node));
-  gtk_label_set_xalign (GTK_LABEL (label), 0.0);
-  gtk_label_set_wrap (GTK_LABEL (label), TRUE);
-
+  GtkWidget *terms = make_tree_terms (self, node);
   if (n == 0)
-    return label;
+    return terms;
 
   GtkWidget *expander = gtk_expander_new (NULL);
-  gtk_expander_set_label_widget (GTK_EXPANDER (expander), label);
+  gtk_expander_set_label_widget (GTK_EXPANDER (expander), terms);
   gtk_expander_set_expanded (GTK_EXPANDER (expander), depth < 1);
 
   GtkWidget *child_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 4);
@@ -171,7 +187,7 @@ make_tree_node (OnymTreeNode *node, int depth)
   for (guint i = 0; i < n; i++)
     {
       OnymTreeNode *child = g_list_model_get_item (children, i);
-      gtk_box_append (GTK_BOX (child_box), make_tree_node (child, depth + 1));
+      gtk_box_append (GTK_BOX (child_box), make_tree_node (self, child, depth + 1));
       g_object_unref (child);
     }
   gtk_expander_set_child (GTK_EXPANDER (expander), child_box);
@@ -180,16 +196,16 @@ make_tree_node (OnymTreeNode *node, int depth)
 }
 
 static GtkWidget *
-make_tree (OnymSection *section)
+make_tree (OnymResultView *self, OnymSection *section)
 {
-  GtkBox *box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 4));
+  GtkBox *box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 6));
 
   GListModel *items = onym_section_get_items (section);
   guint n = g_list_model_get_n_items (items);
   for (guint i = 0; i < n; i++)
     {
       OnymTreeNode *root = g_list_model_get_item (items, i);
-      gtk_box_append (box, make_tree_node (root, 0));
+      gtk_box_append (box, make_tree_node (self, root, 0));
       g_object_unref (root);
     }
   return GTK_WIDGET (box);
@@ -227,7 +243,7 @@ onym_result_view_set_result (OnymResultView *self, OnymResult *result)
           gtk_box_append (self->box, make_chip_flow (self, section));
           break;
         case ONYM_SECTION_TREE:
-          gtk_box_append (self->box, make_tree (section));
+          gtk_box_append (self->box, make_tree (self, section));
           break;
         default:
           break;

@@ -217,7 +217,8 @@ onym_antonym_get_implications (OnymAntonym *self)
 struct _OnymTreeNode
 {
   GObject parent_instance;
-  char *label;
+  GStrv terms;          /* the synset's terms, each look-up-able */
+  char *label;          /* the terms joined, for display and the CLI */
   GListStore *children; /* of OnymTreeNode */
 };
 
@@ -228,6 +229,7 @@ onym_tree_node_finalize (GObject *object)
 {
   OnymTreeNode *self = ONYM_TREE_NODE (object);
 
+  g_strfreev (self->terms);
   g_free (self->label);
   g_clear_object (&self->children);
 
@@ -247,10 +249,11 @@ onym_tree_node_init (OnymTreeNode *self)
 }
 
 OnymTreeNode *
-onym_tree_node_new (const char *label)
+onym_tree_node_new (GStrv terms)
 {
   OnymTreeNode *self = g_object_new (ONYM_TYPE_TREE_NODE, NULL);
-  self->label = g_strdup (label);
+  self->terms = terms; /* (transfer full) */
+  self->label = (terms != NULL) ? g_strjoinv (", ", terms) : g_strdup ("");
   return self;
 }
 
@@ -269,6 +272,13 @@ onym_tree_node_get_label (OnymTreeNode *self)
 {
   g_return_val_if_fail (ONYM_IS_TREE_NODE (self), NULL);
   return self->label;
+}
+
+const char * const *
+onym_tree_node_get_terms (OnymTreeNode *self)
+{
+  g_return_val_if_fail (ONYM_IS_TREE_NODE (self), NULL);
+  return (const char * const *) self->terms;
 }
 
 /**
