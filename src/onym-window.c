@@ -519,6 +519,29 @@ restore_window_state (OnymWindow *self)
 }
 
 static void
+on_roomy_apply (AdwBreakpoint *breakpoint, OnymWindow *self)
+{
+  gtk_widget_add_css_class (GTK_WIDGET (self->result_view), "onym-roomy");
+}
+
+static void
+on_roomy_unapply (AdwBreakpoint *breakpoint, OnymWindow *self)
+{
+  gtk_widget_remove_css_class (GTK_WIDGET (self->result_view), "onym-roomy");
+}
+
+/* Add a little space between sections once the window is tall enough to spare it. */
+static void
+setup_spacing_breakpoint (OnymWindow *self)
+{
+  AdwBreakpoint *breakpoint
+    = adw_breakpoint_new (adw_breakpoint_condition_parse ("min-height: 700px"));
+  g_signal_connect (breakpoint, "apply", G_CALLBACK (on_roomy_apply), self);
+  g_signal_connect (breakpoint, "unapply", G_CALLBACK (on_roomy_unapply), self);
+  adw_application_window_add_breakpoint (ADW_APPLICATION_WINDOW (self), breakpoint);
+}
+
+static void
 onym_window_dispose (GObject *object)
 {
   OnymWindow *self = ONYM_WINDOW (object);
@@ -565,6 +588,7 @@ onym_window_init (OnymWindow *self)
   self->history_pos = -1;
 
   restore_window_state (self);
+  setup_spacing_breakpoint (self);
 
   add_action (self, "lookup", G_VARIANT_TYPE_STRING, G_CALLBACK (on_lookup_action));
   self->back_action = add_action (self, "history-back", NULL, G_CALLBACK (on_history_back));

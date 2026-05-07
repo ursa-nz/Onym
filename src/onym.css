@@ -16,3 +16,17 @@
 .word-chip:hover {
   background-color: alpha(@window_fg_color, 0.13);
 }
+
+/* The indented children of a relation tree node, with a light guide line that makes the nesting
+ * legible without a heavy staircase. */
+.onym-tree-children {
+  margin-left: 7px;
+  margin-top: 4px;
+  padding-left: 9px;
+  border-left: 1px solid alpha(@window_fg_color, 0.15);
+}
+
+/* Extra breathing room above each section heading, applied only when the window is tall enough. */
+.onym-roomy .onym-section-heading {
+  margin-top: 12px;
+}
