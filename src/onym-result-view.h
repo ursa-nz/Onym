@@ -21,4 +21,8 @@ G_DECLARE_FINAL_TYPE (OnymResultView, onym_result_view, ONYM, RESULT_VIEW, GtkWi
 GtkWidget *onym_result_view_new (void);
 void       onym_result_view_set_result (OnymResultView *self, OnymResult *result);
 
+/* How relation tree nodes open by default: 0 collapsed, 1 linear chains, 2 everything. Matches the
+ * TreeExpansion enum in the settings schema. Takes effect on the next set_result. */
+void onym_result_view_set_tree_expansion (OnymResultView *self, int mode);
+
 G_END_DECLS

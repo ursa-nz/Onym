@@ -57,7 +57,50 @@ on_quit_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   g_application_quit (G_APPLICATION (user_data));
 }
 
+static void
+on_expansion_selected (AdwComboRow *row, GParamSpec *pspec, gpointer user_data)
+{
+  GSettings *settings = user_data;
+  g_settings_set_enum (settings, "tree-expansion", (int) adw_combo_row_get_selected (row));
+}
+
+/* A small preferences dialog: for now, how far relation trees open by default. The choice maps to the
+ * tree-expansion setting, and the window re-renders when it changes. */
+static void
+on_preferences_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+  OnymApplication *self = user_data;
+  GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (self));
+
+  const char *options[] = { "Collapsed", "Linear chains", "Everything", NULL };
+  AdwComboRow *trees = ADW_COMBO_ROW (adw_combo_row_new ());
+  adw_preferences_row_set_title (ADW_PREFERENCES_ROW (trees), "Expand relation trees");
+  adw_action_row_set_subtitle (ADW_ACTION_ROW (trees),
+                               "How the is-a, kinds, and part-of trees open by default");
+  GtkStringList *model = gtk_string_list_new (options);
+  adw_combo_row_set_model (trees, G_LIST_MODEL (model));
+  g_object_unref (model);
+
+  GSettings *settings = g_settings_new ("nz.ursa.Onym");
+  adw_combo_row_set_selected (trees, g_settings_get_enum (settings, "tree-expansion"));
+  g_signal_connect (trees, "notify::selected", G_CALLBACK (on_expansion_selected), settings);
+
+  AdwPreferencesGroup *group = ADW_PREFERENCES_GROUP (adw_preferences_group_new ());
+  adw_preferences_group_set_title (group, "Relations");
+  adw_preferences_group_add (group, GTK_WIDGET (trees));
+
+  AdwPreferencesPage *page = ADW_PREFERENCES_PAGE (adw_preferences_page_new ());
+  adw_preferences_page_add (page, group);
+
+  AdwPreferencesDialog *dialog = ADW_PREFERENCES_DIALOG (adw_preferences_dialog_new ());
+  adw_preferences_dialog_add (dialog, page);
+  g_object_set_data_full (G_OBJECT (dialog), "settings", settings, g_object_unref);
+
+  adw_dialog_present (ADW_DIALOG (dialog), GTK_WIDGET (window));
+}
+
 static const GActionEntry app_actions[] = {
+  { "preferences", on_preferences_action, NULL, NULL, NULL, { 0 } },
   { "about", on_about_action, NULL, NULL, NULL, { 0 } },
   { "quit", on_quit_action, NULL, NULL, NULL, { 0 } },
 };
@@ -81,6 +124,10 @@ onym_application_startup (GApplication *application)
 
   const char *quit_accels[] = { "<primary>q", NULL };
   gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.quit", quit_accels);
+
+  const char *preferences_accels[] = { "<primary>comma", NULL };
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.preferences",
+                                         preferences_accels);
 }
 
 static void

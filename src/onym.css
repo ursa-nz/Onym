@@ -30,3 +30,10 @@
 .onym-roomy .onym-section-heading {
   margin-top: 12px;
 }
+
+/* The disclosure arrow on a relation tree node: a compact, quiet toggle. */
+.onym-disclosure {
+  min-width: 0;
+  min-height: 0;
+  padding: 2px;
+}

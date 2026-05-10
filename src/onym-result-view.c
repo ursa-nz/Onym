@@ -14,6 +14,7 @@ struct _OnymResultView
 {
   GtkWidget parent_instance;
   GtkBox *box;
+  int expansion; /* 0 collapsed, 1 linear chains, 2 everything */
 };
 
 G_DEFINE_FINAL_TYPE (OnymResultView, onym_result_view, GTK_TYPE_WIDGET)
@@ -30,6 +31,13 @@ GtkWidget *
 onym_result_view_new (void)
 {
   return g_object_new (ONYM_TYPE_RESULT_VIEW, NULL);
+}
+
+void
+onym_result_view_set_tree_expansion (OnymResultView *self, int mode)
+{
+  g_return_if_fail (ONYM_IS_RESULT_VIEW (self));
+  self->expansion = mode;
 }
 
 static void
@@ -155,7 +163,7 @@ make_tree_terms (OnymResultView *self, OnymTreeNode *node)
   gtk_flow_box_set_column_spacing (flow, 4);
   gtk_flow_box_set_row_spacing (flow, 4);
   gtk_flow_box_set_max_children_per_line (flow, 1000);
-  gtk_widget_set_halign (GTK_WIDGET (flow), GTK_ALIGN_START);
+  gtk_widget_set_hexpand (GTK_WIDGET (flow), TRUE);
 
   const char * const *terms = onym_tree_node_get_terms (node);
   for (guint i = 0; terms != NULL && terms[i] != NULL; i++)
@@ -164,11 +172,20 @@ make_tree_terms (OnymResultView *self, OnymTreeNode *node)
   return GTK_WIDGET (flow);
 }
 
-/* One node of a relation tree. A node with children becomes a collapsible expander whose chips form
- * the header and whose children are indented with a guide line; a leaf is just its chips. A node is
- * expanded by default when it has a single child, so a linear is-a chain is visible at once while a
- * branchy node such as a list of kinds stays tidy. Clicking a chip looks that word up; clicking the
- * triangle expands. */
+/* Swap the disclosure arrow to match the revealed state. */
+static void
+on_disclosure_toggled (GtkToggleButton *toggle, gpointer user_data)
+{
+  gtk_button_set_icon_name (GTK_BUTTON (toggle),
+                            gtk_toggle_button_get_active (toggle) ? "pan-down-symbolic"
+                                                                  : "pan-end-symbolic");
+}
+
+/* One node of a relation tree. A node with children gets a disclosure arrow beside its chips and a
+ * revealer holding its indented children; a leaf is just its chips. A GtkRevealer is used rather than
+ * a GtkExpander because it allocates and propagates its child's height reliably as the chips reflow,
+ * which a nested GtkExpander does not. The default open state follows the expansion mode: nothing,
+ * linear chains only, or everything. */
 static GtkWidget *
 make_tree_node (OnymResultView *self, OnymTreeNode *node)
 {
@@ -179,9 +196,18 @@ make_tree_node (OnymResultView *self, OnymTreeNode *node)
   if (n == 0)
     return terms;
 
-  GtkWidget *expander = gtk_expander_new (NULL);
-  gtk_expander_set_label_widget (GTK_EXPANDER (expander), terms);
-  gtk_expander_set_expanded (GTK_EXPANDER (expander), n == 1);
+  GtkWidget *node_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 4);
+
+  GtkWidget *header = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 4);
+  GtkWidget *toggle = gtk_toggle_button_new ();
+  gtk_button_set_icon_name (GTK_BUTTON (toggle), "pan-end-symbolic");
+  gtk_widget_add_css_class (toggle, "flat");
+  gtk_widget_add_css_class (toggle, "onym-disclosure");
+  gtk_widget_set_valign (toggle, GTK_ALIGN_START);
+  g_signal_connect (toggle, "toggled", G_CALLBACK (on_disclosure_toggled), NULL);
+  gtk_box_append (GTK_BOX (header), toggle);
+  gtk_box_append (GTK_BOX (header), terms);
+  gtk_box_append (GTK_BOX (node_box), header);
 
   GtkWidget *child_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 4);
   gtk_widget_add_css_class (child_box, "onym-tree-children");
@@ -191,9 +217,19 @@ make_tree_node (OnymResultView *self, OnymTreeNode *node)
       gtk_box_append (GTK_BOX (child_box), make_tree_node (self, child));
       g_object_unref (child);
     }
-  gtk_expander_set_child (GTK_EXPANDER (expander), child_box);
 
-  return expander;
+  GtkWidget *revealer = gtk_revealer_new ();
+  gtk_revealer_set_transition_type (GTK_REVEALER (revealer),
+                                    GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN);
+  gtk_revealer_set_child (GTK_REVEALER (revealer), child_box);
+  gtk_box_append (GTK_BOX (node_box), revealer);
+
+  g_object_bind_property (toggle, "active", revealer, "reveal-child",
+                          G_BINDING_BIDIRECTIONAL | G_BINDING_SYNC_CREATE);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (toggle),
+                                self->expansion == 2 || (self->expansion == 1 && n == 1));
+
+  return node_box;
 }
 
 static GtkWidget *
@@ -294,4 +330,5 @@ onym_result_view_init (OnymResultView *self)
 {
   self->box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 6));
   gtk_widget_set_parent (GTK_WIDGET (self->box), GTK_WIDGET (self));
+  self->expansion = 1;
 }

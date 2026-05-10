@@ -32,6 +32,7 @@ struct _OnymWindow
 
   OnymEngine *engine;
   GSettings *settings;
+  OnymResult *current_result; /* the result on screen, for re-rendering when a setting changes */
 
   GPtrArray *history; /* resolved headwords, in visit order */
   int history_pos;    /* index of the current word, or -1 */
@@ -137,8 +138,23 @@ push_history (OnymWindow *self, const char *term)
 static void
 display_result (OnymWindow *self, OnymResult *result)
 {
+  g_set_object (&self->current_result, result);
+  onym_result_view_set_tree_expansion (self->result_view,
+                                       g_settings_get_enum (self->settings, "tree-expansion"));
   onym_result_view_set_result (self->result_view, result);
   gtk_stack_set_visible_child_name (self->stack, "result");
+}
+
+/* Re-render the result on screen when the tree expansion preference changes. */
+static void
+on_tree_expansion_changed (GSettings *settings, const char *key, OnymWindow *self)
+{
+  if (self->current_result == NULL
+      || g_strcmp0 (gtk_stack_get_visible_child_name (self->stack), "result") != 0)
+    return;
+
+  onym_result_view_set_tree_expansion (self->result_view, g_settings_get_enum (settings, key));
+  onym_result_view_set_result (self->result_view, self->current_result);
 }
 
 /* Build a flow of clickable suggestion chips, each wired to the win.lookup action. */
@@ -464,16 +480,17 @@ build_primary_menu (OnymWindow *self)
 {
   self->recents_menu = g_menu_new ();
 
-  GMenu *about_section = g_menu_new ();
-  g_menu_append (about_section, "About Onym", "app.about");
+  GMenu *actions_section = g_menu_new ();
+  g_menu_append (actions_section, "Preferences", "app.preferences");
+  g_menu_append (actions_section, "About Onym", "app.about");
 
   GMenu *menu = g_menu_new ();
   g_menu_append_section (menu, "Recent", G_MENU_MODEL (self->recents_menu));
-  g_menu_append_section (menu, NULL, G_MENU_MODEL (about_section));
+  g_menu_append_section (menu, NULL, G_MENU_MODEL (actions_section));
 
   gtk_menu_button_set_menu_model (self->menu_button, G_MENU_MODEL (menu));
 
-  g_object_unref (about_section);
+  g_object_unref (actions_section);
   g_object_unref (menu);
 }
 
@@ -549,6 +566,7 @@ onym_window_dispose (GObject *object)
   g_clear_handle_id (&self->debounce_id, g_source_remove);
   g_clear_pointer ((GtkWidget **) &self->completion_popover, gtk_widget_unparent);
   g_clear_object (&self->engine);
+  g_clear_object (&self->current_result);
   g_clear_object (&self->settings);
   g_clear_object (&self->recents_menu);
   g_clear_pointer (&self->history, g_ptr_array_unref);
@@ -607,6 +625,8 @@ onym_window_init (OnymWindow *self)
   g_signal_connect (self->search_entry, "changed", G_CALLBACK (on_search_changed), self);
   g_signal_connect (self->search_entry, "activate", G_CALLBACK (on_search_activate), self);
   g_signal_connect (self->result_view, "word-activated", G_CALLBACK (on_word_activated), self);
+  g_signal_connect (self->settings, "changed::tree-expansion",
+                    G_CALLBACK (on_tree_expansion_changed), self);
   g_signal_connect (self, "close-request", G_CALLBACK (on_close_request), NULL);
 
   gtk_widget_grab_focus (GTK_WIDGET (self->search_entry));
