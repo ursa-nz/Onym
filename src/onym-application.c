@@ -33,8 +33,14 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (self));
 
   const char *developers[] = { "ursa.nz", NULL };
-  const char *data_credit[] = { "WordNet, Princeton University https://wordnet.princeton.edu", NULL };
-  const char *engine_credit[] = { "Derived from Artha by Sundaram Ramaswamy", NULL };
+  const char *wordnet[] = { "Princeton University https://wordnet.princeton.edu", NULL };
+  const char *artha[] = { "Sundaram Ramaswamy", NULL };
+  const char *gnome[] = {
+    "GTK https://gtk.org",
+    "libadwaita https://gnome.pages.gitlab.gnome.org/libadwaita/",
+    "GLib https://docs.gtk.org/glib/",
+    NULL,
+  };
 
   AdwAboutDialog *about = ADW_ABOUT_DIALOG (adw_about_dialog_new ());
   adw_about_dialog_set_application_name (about, "Onym");
@@ -42,11 +48,18 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   adw_about_dialog_set_developer_name (about, "ursa.nz");
   adw_about_dialog_set_version (about, ONYM_VERSION);
   adw_about_dialog_set_license_type (about, GTK_LICENSE_GPL_3_0);
+  adw_about_dialog_set_copyright (about, "© 2026 ursa.nz");
   adw_about_dialog_set_website (about, "https://ursa.nz");
-  adw_about_dialog_set_comments (about, "A thesaurus and dictionary built on WordNet.");
+  adw_about_dialog_set_issue_url (about, "https://forge.ursa.nz/ursa-nz/Onym/issues");
+  adw_about_dialog_set_comments (
+    about,
+    "A thesaurus and dictionary built on WordNet, carrying forward the work of Artha.\n\n"
+    "Crafted on Kaurna Pangkarra, in Australia, with respect to the Kaurna people, their "
+    "language, and their continuing connection to this Country.");
   adw_about_dialog_set_developers (about, developers);
-  adw_about_dialog_add_acknowledgement_section (about, "Word data", data_credit);
-  adw_about_dialog_add_acknowledgement_section (about, "Query engine", engine_credit);
+  adw_about_dialog_add_acknowledgement_section (about, "Built on WordNet", wordnet);
+  adw_about_dialog_add_acknowledgement_section (about, "Engine derived from Artha", artha);
+  adw_about_dialog_add_acknowledgement_section (about, "Made with GNOME", gnome);
 
   adw_dialog_present (ADW_DIALOG (about), GTK_WIDGET (window));
 }
