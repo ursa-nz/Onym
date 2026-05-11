@@ -9,17 +9,25 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Build inside an Ubuntu 25.04 container so the toolchain matches the target platform. The
+    # runner's own image is older than our GTK 4.14 and libadwaita 1.5 floors. Without this the
+    # application, an auto feature, would drop out of the build silently and leave a green run that
+    # never compiled it.
+    container: ubuntu:25.04
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install build dependencies
+      # The base image is minimal and runs as root. Install Node and git, which the checkout action
+      # needs, before that step. There is no sudo because we are already root.
+      - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates git nodejs \
             meson ninja-build gcc pkg-config \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
             gobject-introspection libgirepository1.0-dev \
             wordnet-base wordnet-dev pipx
+
+      - uses: actions/checkout@v4
 
       - name: REUSE lint
         run: pipx run reuse lint
