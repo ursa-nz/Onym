@@ -8,4 +8,6 @@ install_data('nz.ursa.Onym.gschema.xml',
 # Compile the schema in the build tree so the app can run uninstalled, and recompile the system
 # schema directory after install.
 gnome.compile_schemas(build_by_default: true, depend_files: files('nz.ursa.Onym.gschema.xml'))
-gnome.post_install(glib_compile_schemas: true)
+gnome.post_install(glib_compile_schemas: true, gtk_update_icon_cache: true)
+
+subdir('icons')
