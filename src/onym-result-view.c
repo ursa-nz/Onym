@@ -69,10 +69,15 @@ make_chip (OnymResultView *self, const char *term)
 static GtkWidget *
 make_heading (const char *title)
 {
-  GtkWidget *label = gtk_label_new (title);
-  gtk_label_set_xalign (GTK_LABEL (label), 0.0);
+  GtkWidget *label = g_object_new (GTK_TYPE_LABEL,
+                                   "label", title,
+                                   "xalign", 0.0,
+                                   "accessible-role", GTK_ACCESSIBLE_ROLE_HEADING,
+                                   NULL);
   gtk_widget_add_css_class (label, "heading");
   gtk_widget_add_css_class (label, "onym-section-heading");
+  gtk_accessible_update_property (GTK_ACCESSIBLE (label),
+                                  GTK_ACCESSIBLE_PROPERTY_LEVEL, 2, -1);
   return label;
 }
 
@@ -257,10 +262,15 @@ onym_result_view_set_result (OnymResultView *self, OnymResult *result)
   if (result == NULL)
     return;
 
-  GtkWidget *headword = gtk_label_new (onym_result_get_term (result));
-  gtk_label_set_xalign (GTK_LABEL (headword), 0.0);
+  GtkWidget *headword = g_object_new (GTK_TYPE_LABEL,
+                                      "label", onym_result_get_term (result),
+                                      "xalign", 0.0,
+                                      "accessible-role", GTK_ACCESSIBLE_ROLE_HEADING,
+                                      NULL);
   gtk_widget_add_css_class (headword, "title-1");
   gtk_widget_set_margin_bottom (headword, 6);
+  gtk_accessible_update_property (GTK_ACCESSIBLE (headword),
+                                  GTK_ACCESSIBLE_PROPERTY_LEVEL, 1, -1);
   gtk_box_append (self->box, headword);
 
   GListModel *sections = onym_result_get_sections (result);
