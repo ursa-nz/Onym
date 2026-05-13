@@ -175,6 +175,8 @@ build_suggestions (char **suggestions)
       gtk_actionable_set_action_name (GTK_ACTIONABLE (button), "win.lookup");
       gtk_actionable_set_action_target_value (GTK_ACTIONABLE (button),
                                               g_variant_new_string (suggestions[i]));
+      gtk_accessible_update_property (GTK_ACCESSIBLE (button),
+                                      GTK_ACCESSIBLE_PROPERTY_DESCRIPTION, "Suggestion", -1);
       gtk_flow_box_append (GTK_FLOW_BOX (flow), button);
     }
   return flow;

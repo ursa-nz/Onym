@@ -55,14 +55,19 @@ on_chip_clicked (GtkButton *button, OnymResultView *self)
   g_signal_emit (self, signals[WORD_ACTIVATED], 0, term);
 }
 
+/* A clickable term. @relation is what the term is to the headword, set as the chip's accessible
+ * description so a screen reader reads, for example, "felicitous, synonym". */
 static GtkWidget *
-make_chip (OnymResultView *self, const char *term)
+make_chip (OnymResultView *self, const char *term, const char *relation)
 {
   GtkWidget *button = gtk_button_new_with_label (term);
   gtk_widget_add_css_class (button, "flat");
   gtk_widget_add_css_class (button, "word-chip");
   g_object_set_data_full (G_OBJECT (button), "onym-term", g_strdup (term), g_free);
   g_signal_connect (button, "clicked", G_CALLBACK (on_chip_clicked), self);
+  if (relation != NULL)
+    gtk_accessible_update_property (GTK_ACCESSIBLE (button),
+                                    GTK_ACCESSIBLE_PROPERTY_DESCRIPTION, relation, -1);
   return button;
 }
 
@@ -93,12 +98,24 @@ make_chip_flow (OnymResultView *self, OnymSection *section)
 
   GListModel *items = onym_section_get_items (section);
   gboolean antonyms = onym_section_get_kind (section) == ONYM_SECTION_ANTONYMS;
+  const char *title = onym_section_get_title (section);
   guint n = g_list_model_get_n_items (items);
   for (guint i = 0; i < n; i++)
     {
       gpointer item = g_list_model_get_item (items, i);
-      const char *term = antonyms ? onym_antonym_get_term (item) : onym_word_get_term (item);
-      gtk_flow_box_append (flow, make_chip (self, term));
+      const char *term;
+      const char *relation;
+      if (antonyms)
+        {
+          term = onym_antonym_get_term (item);
+          relation = onym_antonym_get_direct (item) ? "Direct antonym" : "Indirect antonym";
+        }
+      else
+        {
+          term = onym_word_get_term (item);
+          relation = title;
+        }
+      gtk_flow_box_append (flow, make_chip (self, term, relation));
       g_object_unref (item);
     }
   return GTK_WIDGET (flow);
@@ -161,7 +178,7 @@ make_definitions (GListModel *items)
 
 /* A node's synset terms, each as a clickable chip, so any related word can be looked up. */
 static GtkWidget *
-make_tree_terms (OnymResultView *self, OnymTreeNode *node)
+make_tree_terms (OnymResultView *self, OnymTreeNode *node, const char *relation)
 {
   GtkFlowBox *flow = GTK_FLOW_BOX (gtk_flow_box_new ());
   gtk_flow_box_set_selection_mode (flow, GTK_SELECTION_NONE);
@@ -172,7 +189,7 @@ make_tree_terms (OnymResultView *self, OnymTreeNode *node)
 
   const char * const *terms = onym_tree_node_get_terms (node);
   for (guint i = 0; terms != NULL && terms[i] != NULL; i++)
-    gtk_flow_box_append (flow, make_chip (self, terms[i]));
+    gtk_flow_box_append (flow, make_chip (self, terms[i], relation));
 
   return GTK_WIDGET (flow);
 }
@@ -192,12 +209,12 @@ on_disclosure_toggled (GtkToggleButton *toggle, gpointer user_data)
  * which a nested GtkExpander does not. The default open state follows the expansion mode: nothing,
  * linear chains only, or everything. */
 static GtkWidget *
-make_tree_node (OnymResultView *self, OnymTreeNode *node)
+make_tree_node (OnymResultView *self, OnymTreeNode *node, const char *relation)
 {
   GListModel *children = onym_tree_node_get_children (node);
   guint n = g_list_model_get_n_items (children);
 
-  GtkWidget *terms = make_tree_terms (self, node);
+  GtkWidget *terms = make_tree_terms (self, node, relation);
   if (n == 0)
     return terms;
 
@@ -219,7 +236,7 @@ make_tree_node (OnymResultView *self, OnymTreeNode *node)
   for (guint i = 0; i < n; i++)
     {
       OnymTreeNode *child = g_list_model_get_item (children, i);
-      gtk_box_append (GTK_BOX (child_box), make_tree_node (self, child));
+      gtk_box_append (GTK_BOX (child_box), make_tree_node (self, child, relation));
       g_object_unref (child);
     }
 
@@ -243,11 +260,12 @@ make_tree (OnymResultView *self, OnymSection *section)
   GtkBox *box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 6));
 
   GListModel *items = onym_section_get_items (section);
+  const char *relation = onym_section_get_title (section);
   guint n = g_list_model_get_n_items (items);
   for (guint i = 0; i < n; i++)
     {
       OnymTreeNode *root = g_list_model_get_item (items, i);
-      gtk_box_append (box, make_tree_node (self, root));
+      gtk_box_append (box, make_tree_node (self, root, relation));
       g_object_unref (root);
     }
   return GTK_WIDGET (box);
