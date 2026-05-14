@@ -124,13 +124,21 @@ make_chip_flow (OnymResultView *self, OnymSection *section)
 static GtkWidget *
 make_definitions (GListModel *items)
 {
-  GtkBox *box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 12));
+  GtkBox *box = GTK_BOX (g_object_new (GTK_TYPE_BOX,
+                                       "orientation", GTK_ORIENTATION_VERTICAL,
+                                       "spacing", 12,
+                                       "accessible-role", GTK_ACCESSIBLE_ROLE_LIST,
+                                       NULL));
 
   guint n = g_list_model_get_n_items (items);
   for (guint i = 0; i < n; i++)
     {
       OnymDefinition *def = g_list_model_get_item (items, i);
-      GtkBox *row = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 3));
+      GtkBox *row = GTK_BOX (g_object_new (GTK_TYPE_BOX,
+                                           "orientation", GTK_ORIENTATION_VERTICAL,
+                                           "spacing", 3,
+                                           "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM,
+                                           NULL));
 
       GtkWidget *gloss = gtk_label_new (NULL);
       gtk_label_set_wrap (GTK_LABEL (gloss), TRUE);
