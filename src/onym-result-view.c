@@ -184,9 +184,10 @@ make_definitions (GListModel *items)
   return GTK_WIDGET (box);
 }
 
-/* A node's synset terms, each as a clickable chip, so any related word can be looked up. */
+/* A node's synset terms, each as a clickable chip. The relation is carried by the enclosing tree
+ * item, so the chips themselves stay unadorned and a screen reader does not repeat it per term. */
 static GtkWidget *
-make_tree_terms (OnymResultView *self, OnymTreeNode *node, const char *relation)
+make_tree_terms (OnymResultView *self, OnymTreeNode *node)
 {
   GtkFlowBox *flow = GTK_FLOW_BOX (gtk_flow_box_new ());
   gtk_flow_box_set_selection_mode (flow, GTK_SELECTION_NONE);
@@ -197,36 +198,50 @@ make_tree_terms (OnymResultView *self, OnymTreeNode *node, const char *relation)
 
   const char * const *terms = onym_tree_node_get_terms (node);
   for (guint i = 0; terms != NULL && terms[i] != NULL; i++)
-    gtk_flow_box_append (flow, make_chip (self, terms[i], relation));
+    gtk_flow_box_append (flow, make_chip (self, terms[i], NULL));
 
   return GTK_WIDGET (flow);
 }
 
-/* Swap the disclosure arrow to match the revealed state. */
+/* Swap the disclosure arrow and update the node's expanded state for assistive technology. */
 static void
-on_disclosure_toggled (GtkToggleButton *toggle, gpointer user_data)
+on_disclosure_toggled (GtkToggleButton *toggle, GtkWidget *tree_item)
 {
+  gboolean active = gtk_toggle_button_get_active (toggle);
   gtk_button_set_icon_name (GTK_BUTTON (toggle),
-                            gtk_toggle_button_get_active (toggle) ? "pan-down-symbolic"
-                                                                  : "pan-end-symbolic");
+                            active ? "pan-down-symbolic" : "pan-end-symbolic");
+  gtk_accessible_update_state (GTK_ACCESSIBLE (tree_item),
+                               GTK_ACCESSIBLE_STATE_EXPANDED, active, -1);
 }
 
-/* One node of a relation tree. A node with children gets a disclosure arrow beside its chips and a
- * revealer holding its indented children; a leaf is just its chips. A GtkRevealer is used rather than
- * a GtkExpander because it allocates and propagates its child's height reliably as the chips reflow,
+/* One node of a relation tree, exposed as a tree item that reports its depth so a screen reader can
+ * place it in the hierarchy. A node with children gets a disclosure beside its chips and a revealer
+ * holding its indented children, which form a group; the disclosure carries the node's expanded
+ * state and the group it controls. A leaf is just its chips. A GtkRevealer is used rather than a
+ * GtkExpander because it allocates and propagates its child's height reliably as the chips reflow,
  * which a nested GtkExpander does not. The default open state follows the expansion mode: nothing,
  * linear chains only, or everything. */
 static GtkWidget *
-make_tree_node (OnymResultView *self, OnymTreeNode *node, const char *relation)
+make_tree_node (OnymResultView *self, OnymTreeNode *node, guint level)
 {
   GListModel *children = onym_tree_node_get_children (node);
   guint n = g_list_model_get_n_items (children);
 
-  GtkWidget *terms = make_tree_terms (self, node, relation);
-  if (n == 0)
-    return terms;
+  GtkWidget *node_box = g_object_new (GTK_TYPE_BOX,
+                                      "orientation", GTK_ORIENTATION_VERTICAL,
+                                      "spacing", 4,
+                                      "accessible-role", GTK_ACCESSIBLE_ROLE_TREE_ITEM,
+                                      NULL);
+  gtk_accessible_update_property (GTK_ACCESSIBLE (node_box),
+                                  GTK_ACCESSIBLE_PROPERTY_LEVEL, (int) level,
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL, onym_tree_node_get_label (node), -1);
 
-  GtkWidget *node_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 4);
+  GtkWidget *terms = make_tree_terms (self, node);
+  if (n == 0)
+    {
+      gtk_box_append (GTK_BOX (node_box), terms);
+      return node_box;
+    }
 
   GtkWidget *header = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 4);
   GtkWidget *toggle = gtk_toggle_button_new ();
@@ -234,17 +249,22 @@ make_tree_node (OnymResultView *self, OnymTreeNode *node, const char *relation)
   gtk_widget_add_css_class (toggle, "flat");
   gtk_widget_add_css_class (toggle, "onym-disclosure");
   gtk_widget_set_valign (toggle, GTK_ALIGN_START);
-  g_signal_connect (toggle, "toggled", G_CALLBACK (on_disclosure_toggled), NULL);
+  gtk_accessible_update_property (GTK_ACCESSIBLE (toggle),
+                                  GTK_ACCESSIBLE_PROPERTY_LABEL, "Toggle nested terms", -1);
   gtk_box_append (GTK_BOX (header), toggle);
   gtk_box_append (GTK_BOX (header), terms);
   gtk_box_append (GTK_BOX (node_box), header);
 
-  GtkWidget *child_box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 4);
+  GtkWidget *child_box = g_object_new (GTK_TYPE_BOX,
+                                       "orientation", GTK_ORIENTATION_VERTICAL,
+                                       "spacing", 4,
+                                       "accessible-role", GTK_ACCESSIBLE_ROLE_GROUP,
+                                       NULL);
   gtk_widget_add_css_class (child_box, "onym-tree-children");
   for (guint i = 0; i < n; i++)
     {
       OnymTreeNode *child = g_list_model_get_item (children, i);
-      gtk_box_append (GTK_BOX (child_box), make_tree_node (self, child, relation));
+      gtk_box_append (GTK_BOX (child_box), make_tree_node (self, child, level + 1));
       g_object_unref (child);
     }
 
@@ -256,8 +276,15 @@ make_tree_node (OnymResultView *self, OnymTreeNode *node, const char *relation)
 
   g_object_bind_property (toggle, "active", revealer, "reveal-child",
                           G_BINDING_BIDIRECTIONAL | G_BINDING_SYNC_CREATE);
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (toggle),
-                                self->expansion == 2 || (self->expansion == 1 && n == 1));
+  gtk_accessible_update_relation (GTK_ACCESSIBLE (toggle), GTK_ACCESSIBLE_RELATION_CONTROLS,
+                                  GTK_ACCESSIBLE (child_box), NULL, -1);
+  g_signal_connect (toggle, "toggled", G_CALLBACK (on_disclosure_toggled), node_box);
+
+  gboolean open = self->expansion == 2 || (self->expansion == 1 && n == 1);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (toggle), open);
+  gtk_button_set_icon_name (GTK_BUTTON (toggle), open ? "pan-down-symbolic" : "pan-end-symbolic");
+  gtk_accessible_update_state (GTK_ACCESSIBLE (node_box),
+                               GTK_ACCESSIBLE_STATE_EXPANDED, open, -1);
 
   return node_box;
 }
@@ -265,15 +292,18 @@ make_tree_node (OnymResultView *self, OnymTreeNode *node, const char *relation)
 static GtkWidget *
 make_tree (OnymResultView *self, OnymSection *section)
 {
-  GtkBox *box = GTK_BOX (gtk_box_new (GTK_ORIENTATION_VERTICAL, 6));
+  GtkBox *box = GTK_BOX (g_object_new (GTK_TYPE_BOX,
+                                       "orientation", GTK_ORIENTATION_VERTICAL,
+                                       "spacing", 6,
+                                       "accessible-role", GTK_ACCESSIBLE_ROLE_TREE,
+                                       NULL));
 
   GListModel *items = onym_section_get_items (section);
-  const char *relation = onym_section_get_title (section);
   guint n = g_list_model_get_n_items (items);
   for (guint i = 0; i < n; i++)
     {
       OnymTreeNode *root = g_list_model_get_item (items, i);
-      gtk_box_append (box, make_tree_node (self, root, relation));
+      gtk_box_append (box, make_tree_node (self, root, 1));
       g_object_unref (root);
     }
   return GTK_WIDGET (box);
