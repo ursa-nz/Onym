@@ -169,9 +169,10 @@ make_definitions (GListModel *items)
           gtk_label_set_wrap (GTK_LABEL (example), TRUE);
           gtk_label_set_xalign (GTK_LABEL (example), 0.0);
           gtk_widget_set_margin_start (example, 18);
+          gtk_widget_add_css_class (example, "dim-label");
 
           char *example_esc = g_markup_escape_text (examples[e], -1);
-          char *example_markup = g_strdup_printf ("<span alpha='55%%'><i>\"%s\"</i></span>", example_esc);
+          char *example_markup = g_strdup_printf ("<i>\"%s\"</i>", example_esc);
           gtk_label_set_markup (GTK_LABEL (example), example_markup);
           g_free (example_markup);
           g_free (example_esc);
