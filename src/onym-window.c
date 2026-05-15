@@ -157,6 +157,18 @@ on_tree_expansion_changed (GSettings *settings, const char *key, OnymWindow *sel
   onym_result_view_set_result (self->result_view, self->current_result);
 }
 
+/* Keep the window title in step with what is shown, so the frame announces the current word to a
+ * screen reader and labels the window in the shell. */
+static void
+on_visible_child_changed (GtkStack *stack, GParamSpec *pspec, OnymWindow *self)
+{
+  if (g_strcmp0 (gtk_stack_get_visible_child_name (stack), "result") == 0
+      && self->current_result != NULL)
+    gtk_window_set_title (GTK_WINDOW (self), onym_result_get_term (self->current_result));
+  else
+    gtk_window_set_title (GTK_WINDOW (self), "Onym");
+}
+
 /* Build a flow of clickable suggestion chips, each wired to the win.lookup action. */
 static GtkWidget *
 build_suggestions (char **suggestions)
@@ -627,6 +639,8 @@ onym_window_init (OnymWindow *self)
   g_signal_connect (self->search_entry, "changed", G_CALLBACK (on_search_changed), self);
   g_signal_connect (self->search_entry, "activate", G_CALLBACK (on_search_activate), self);
   g_signal_connect (self->result_view, "word-activated", G_CALLBACK (on_word_activated), self);
+  g_signal_connect (self->stack, "notify::visible-child-name",
+                    G_CALLBACK (on_visible_child_changed), self);
   g_signal_connect (self->settings, "changed::tree-expansion",
                     G_CALLBACK (on_tree_expansion_changed), self);
   g_signal_connect (self, "close-request", G_CALLBACK (on_close_request), NULL);

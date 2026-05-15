@@ -32,6 +32,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
               <object class="GtkSearchEntry" id="search_entry">
                 <property name="placeholder-text" translatable="yes">Search a word</property>
                 <property name="width-request">220</property>
+                <accessibility>
+                  <property name="label" translatable="yes">Search a word</property>
+                </accessibility>
               </object>
             </property>
             <child type="end">
