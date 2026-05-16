@@ -71,6 +71,17 @@ make_chip (OnymResultView *self, const char *term, const char *relation)
   return button;
 }
 
+/* Append @chip to @flow inside a cell of the given role. A flow box exposes as a grid by default,
+ * which a screen reader reads as a table; rolling the flow and its cells ourselves keeps the
+ * announcement accurate and quiet. */
+static void
+flow_append (GtkFlowBox *flow, GtkWidget *chip, GtkAccessibleRole cell_role)
+{
+  GtkWidget *cell = g_object_new (GTK_TYPE_FLOW_BOX_CHILD, "accessible-role", cell_role, NULL);
+  gtk_flow_box_child_set_child (GTK_FLOW_BOX_CHILD (cell), chip);
+  gtk_flow_box_append (flow, GTK_WIDGET (cell));
+}
+
 static GtkWidget *
 make_heading (const char *title)
 {
@@ -89,7 +100,8 @@ make_heading (const char *title)
 static GtkWidget *
 make_chip_flow (OnymResultView *self, OnymSection *section)
 {
-  GtkFlowBox *flow = GTK_FLOW_BOX (gtk_flow_box_new ());
+  GtkFlowBox *flow = GTK_FLOW_BOX (g_object_new (GTK_TYPE_FLOW_BOX,
+                                                 "accessible-role", GTK_ACCESSIBLE_ROLE_LIST, NULL));
   gtk_flow_box_set_selection_mode (flow, GTK_SELECTION_NONE);
   gtk_flow_box_set_homogeneous (flow, FALSE);
   gtk_flow_box_set_column_spacing (flow, 6);
@@ -115,7 +127,7 @@ make_chip_flow (OnymResultView *self, OnymSection *section)
           term = onym_word_get_term (item);
           relation = title;
         }
-      gtk_flow_box_append (flow, make_chip (self, term, relation));
+      flow_append (flow, make_chip (self, term, relation), GTK_ACCESSIBLE_ROLE_LIST_ITEM);
       g_object_unref (item);
     }
   return GTK_WIDGET (flow);
@@ -190,7 +202,9 @@ make_definitions (GListModel *items)
 static GtkWidget *
 make_tree_terms (OnymResultView *self, OnymTreeNode *node)
 {
-  GtkFlowBox *flow = GTK_FLOW_BOX (gtk_flow_box_new ());
+  GtkFlowBox *flow = GTK_FLOW_BOX (g_object_new (GTK_TYPE_FLOW_BOX,
+                                                 "accessible-role", GTK_ACCESSIBLE_ROLE_GROUP,
+                                                 NULL));
   gtk_flow_box_set_selection_mode (flow, GTK_SELECTION_NONE);
   gtk_flow_box_set_column_spacing (flow, 4);
   gtk_flow_box_set_row_spacing (flow, 4);
@@ -199,7 +213,7 @@ make_tree_terms (OnymResultView *self, OnymTreeNode *node)
 
   const char * const *terms = onym_tree_node_get_terms (node);
   for (guint i = 0; terms != NULL && terms[i] != NULL; i++)
-    gtk_flow_box_append (flow, make_chip (self, terms[i], NULL));
+    flow_append (flow, make_chip (self, terms[i], NULL), GTK_ACCESSIBLE_ROLE_GROUP);
 
   return GTK_WIDGET (flow);
 }

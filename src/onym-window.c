@@ -173,7 +173,8 @@ on_visible_child_changed (GtkStack *stack, GParamSpec *pspec, OnymWindow *self)
 static GtkWidget *
 build_suggestions (char **suggestions)
 {
-  GtkWidget *flow = gtk_flow_box_new ();
+  GtkWidget *flow = g_object_new (GTK_TYPE_FLOW_BOX,
+                                  "accessible-role", GTK_ACCESSIBLE_ROLE_LIST, NULL);
   gtk_flow_box_set_selection_mode (GTK_FLOW_BOX (flow), GTK_SELECTION_NONE);
   gtk_widget_set_halign (flow, GTK_ALIGN_CENTER);
   gtk_flow_box_set_column_spacing (GTK_FLOW_BOX (flow), 6);
@@ -189,7 +190,11 @@ build_suggestions (char **suggestions)
                                               g_variant_new_string (suggestions[i]));
       gtk_accessible_update_property (GTK_ACCESSIBLE (button),
                                       GTK_ACCESSIBLE_PROPERTY_DESCRIPTION, "Suggestion", -1);
-      gtk_flow_box_append (GTK_FLOW_BOX (flow), button);
+
+      GtkWidget *cell = g_object_new (GTK_TYPE_FLOW_BOX_CHILD,
+                                      "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM, NULL);
+      gtk_flow_box_child_set_child (GTK_FLOW_BOX_CHILD (cell), button);
+      gtk_flow_box_append (GTK_FLOW_BOX (flow), cell);
     }
   return flow;
 }
