@@ -193,6 +193,7 @@ build_suggestions (char **suggestions)
 
       GtkWidget *cell = g_object_new (GTK_TYPE_FLOW_BOX_CHILD,
                                       "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM, NULL);
+      gtk_widget_set_focusable (cell, FALSE);
       gtk_flow_box_child_set_child (GTK_FLOW_BOX_CHILD (cell), button);
       gtk_flow_box_append (GTK_FLOW_BOX (flow), cell);
     }

@@ -78,6 +78,7 @@ static void
 flow_append (GtkFlowBox *flow, GtkWidget *chip, GtkAccessibleRole cell_role)
 {
   GtkWidget *cell = g_object_new (GTK_TYPE_FLOW_BOX_CHILD, "accessible-role", cell_role, NULL);
+  gtk_widget_set_focusable (cell, FALSE);
   gtk_flow_box_child_set_child (GTK_FLOW_BOX_CHILD (cell), chip);
   gtk_flow_box_append (flow, GTK_WIDGET (cell));
 }
@@ -203,7 +204,7 @@ static GtkWidget *
 make_tree_terms (OnymResultView *self, OnymTreeNode *node)
 {
   GtkFlowBox *flow = GTK_FLOW_BOX (g_object_new (GTK_TYPE_FLOW_BOX,
-                                                 "accessible-role", GTK_ACCESSIBLE_ROLE_GROUP,
+                                                 "accessible-role", GTK_ACCESSIBLE_ROLE_GENERIC,
                                                  NULL));
   gtk_flow_box_set_selection_mode (flow, GTK_SELECTION_NONE);
   gtk_flow_box_set_column_spacing (flow, 4);
@@ -213,7 +214,7 @@ make_tree_terms (OnymResultView *self, OnymTreeNode *node)
 
   const char * const *terms = onym_tree_node_get_terms (node);
   for (guint i = 0; terms != NULL && terms[i] != NULL; i++)
-    flow_append (flow, make_chip (self, terms[i], NULL), GTK_ACCESSIBLE_ROLE_GROUP);
+    flow_append (flow, make_chip (self, terms[i], NULL), GTK_ACCESSIBLE_ROLE_GENERIC);
 
   return GTK_WIDGET (flow);
 }
