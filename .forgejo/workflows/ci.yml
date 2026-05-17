@@ -25,7 +25,8 @@ jobs:
             meson ninja-build gcc pkg-config \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
             gobject-introspection libgirepository1.0-dev \
-            wordnet-base wordnet-dev pipx
+            wordnet-base wordnet-dev pipx \
+            gettext appstream
 
       - uses: actions/checkout@v4
 
