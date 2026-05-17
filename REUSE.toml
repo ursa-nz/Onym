@@ -10,7 +10,7 @@ SPDX-License-Identifier = "GPL-2.0-or-later"
 
 # Config files and data that cannot carry, or do not warrant, an inline header.
 [[annotations]]
-path = [".gitignore", ".editorconfig", ".clang-format", "COPYING", "po/**", "libonym/tests/golden/**"]
+path = [".gitignore", ".editorconfig", ".clang-format", "COPYING", "po/**", "data/screenshots/**", "libonym/tests/golden/**"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 ursa.nz <code@ursa.nz>"
 SPDX-License-Identifier = "GPL-3.0-or-later"

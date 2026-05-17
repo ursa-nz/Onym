@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+SPDX-License-Identifier: FSFAP
+-->
+<component type="desktop-application">
+  <id>nz.ursa.Onym</id>
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Onym</name>
+  <summary>Thesaurus and dictionary built on WordNet</summary>
+
+  <description>
+    <p>Onym is a thesaurus and dictionary for GNOME. Type a word and Onym shows its meanings grouped by part of speech, with example sentences, then its synonyms, its antonyms, and the lexical relations that connect it to other words.</p>
+    <p>Every word on screen is a link, so you look one up just by clicking it. Search is live, with completion as you type and a suggestion when a word is misspelt.</p>
+    <p>The word data comes from WordNet, the lexical database from Princeton University. The query engine is derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy.</p>
+  </description>
+
+  <launchable type="desktop-id">nz.ursa.Onym.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <image type="source">https://forge.ursa.nz/ursa-nz/Onym/raw/branch/main/data/screenshots/onym-overview.png</image>
+      <caption>A word with its meanings, synonyms, antonyms, and relations</caption>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://ursa.nz</url>
+  <url type="bugtracker">https://forge.ursa.nz/ursa-nz/Onym/issues</url>
+  <url type="vcs-browser">https://forge.ursa.nz/ursa-nz/Onym</url>
+
+  <developer id="nz.ursa">
+    <name>ursa.nz</name>
+  </developer>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.1.0" date="2026-06-05">
+      <description>
+        <p>First packaged release.</p>
+      </description>
+    </release>
+  </releases>
+</component>
