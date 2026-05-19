@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+# SPDX-License-Identifier: GPL-3.0-or-later
+[Desktop Entry]
+Name=Onym
+GenericName=Dictionary
+Comment=Look up meanings, synonyms, and antonyms
+Exec=onym
+Icon=nz.ursa.Onym
+Terminal=false
+Type=Application
+Categories=GNOME;GTK;Utility;TextTools;Dictionary;
+Keywords=dictionary;thesaurus;synonym;antonym;WordNet;word;definition;lexicon;
+StartupNotify=true

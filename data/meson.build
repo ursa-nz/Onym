@@ -31,3 +31,18 @@ if appstreamcli.found()
     args: ['validate', '--strict', '--no-net', metainfo_file],
   )
 endif
+
+# Desktop entry, merged with translations and installed.
+desktop_file = i18n.merge_file(
+  input: 'nz.ursa.Onym.desktop.in',
+  output: 'nz.ursa.Onym.desktop',
+  type: 'desktop',
+  po_dir: meson.project_source_root() / 'po',
+  install: true,
+  install_dir: get_option('datadir') / 'applications',
+)
+
+desktop_file_validate = find_program('desktop-file-validate', required: false)
+if desktop_file_validate.found()
+  test('desktop-file', desktop_file_validate, args: [desktop_file])
+endif
