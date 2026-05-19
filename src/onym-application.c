@@ -33,7 +33,11 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   GtkWindow *window = gtk_application_get_active_window (GTK_APPLICATION (self));
 
   const char *developers[] = { "ursa.nz", NULL };
-  const char *wordnet[] = { "Princeton University https://wordnet.princeton.edu", NULL };
+  const char *wordnet[] = {
+    "Princeton University https://wordnet.princeton.edu",
+    "Debian WordNet maintainers https://tracker.debian.org/pkg/wordnet",
+    NULL,
+  };
   const char *artha[] = { "Sundaram Ramaswamy", NULL };
   const char *gnome[] = {
     "GTK https://gtk.org",
