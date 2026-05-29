@@ -1,0 +1,31 @@
+Adapt paths of tcl script to Debian locations
+Author: Andreas Tille <tille@debian.org>
+
+--- a/src/wnb
++++ b/src/wnb
+@@ -1,6 +1,6 @@
+ #!/bin/sh 
+ # the following line is evaluated by sh but ignored by tcl \
+-wishwn "$0" "$@" &
++/usr/lib/wordnet/wishwn "$0" "$@" &
+ # the following line is evaluated by sh but ignored by tcl \
+ exec true
+ # the preceding lines make this script self-executing on unix systems
+@@ -103,7 +103,7 @@ set version "3.0"
+ 
+ if {$tcl_platform(platform) == "unix"} {
+    if {[lsearch -exact [array names env] WNHOME] == -1} {
+-	set resourcedir "/usr/local/WordNet-3.0/lib/wnres"
++	set resourcedir "/usr/share/wordnet/wnres"
+    } else {
+ 	set resourcedir "$env(WNHOME)/lib/wnres"
+    }
+@@ -1725,7 +1725,7 @@ if {$labonly} {
+    -command {showhelpwidget helpwidget_wngloss $resourcedir/wngloss.man "WordNet Glossary"}
+ .menubar.help.menu add command \
+    -label "Display the WordNet license" \
+-   -command {showhelpwidget helpwidget_license $resourcedir/license.txt "WordNet License"}
++   -command {showhelpwidget helpwidget_license /usr/share/doc/wordnet/copyright "WordNet License"}
+ .menubar.help.menu add separator
+ .menubar.help.menu add command \
+    -label "About the WordNet browser" \

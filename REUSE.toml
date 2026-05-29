@@ -14,3 +14,10 @@ path = [".gitignore", ".editorconfig", ".clang-format", "COPYING", "po/**", "dat
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 ursa.nz <code@ursa.nz>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# WordNet build patches, vendored from Debian's wordnet package; its debian/ tree is GPL-2+.
+[[annotations]]
+path = ["build-aux/wordnet-patches/*.patch", "build-aux/wordnet-patches/series"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "the Debian WordNet maintainers"
+SPDX-License-Identifier = "GPL-2.0-or-later"

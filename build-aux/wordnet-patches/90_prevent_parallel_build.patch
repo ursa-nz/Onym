@@ -1,0 +1,28 @@
+Description: Prevent parallel builds of grind because this might lead to
+ FTBFS in some cases
+Author: Jakub Wilk <ubanus@users.sf.net>
+Bug-Debian: http://bugs.debian.org/540491
+
+--- a/src/grind/Makefile.in
++++ b/src/grind/Makefile.in
+@@ -512,3 +512,8 @@ uninstall-am: uninstall-binPROGRAMS
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
++
++# Prevent parallel builds as it was advised by Jakub Wilk <ubanus@users.sf.net>
++# see http://bugs.debian.org/540491
++.NOTPARALLEL:
++
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -657,3 +657,9 @@ dist-hook:
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+ .NOEXPORT:
++
++# Prevent parallel builds as it was advised by Jakub Wilk <ubanus@users.sf.net>
++# see http://bugs.debian.org/540491
++# I hope this also fixes #549768
++.NOTPARALLEL:
++

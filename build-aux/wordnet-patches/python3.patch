@@ -1,0 +1,76 @@
+Description: port script to Python 3
+ Use 2to3 and then manually fix the script to by compatible with Python 3.
+Author: Stuart Prescott <stuart@debian.org>
+Bug: #938831
+--- a/contrib/wordnet_structures/wordnet_structures.py
++++ b/contrib/wordnet_structures/wordnet_structures.py
+@@ -324,7 +324,7 @@
+       rv = ''
+       while (e > 0):
+          e -= 1
+-         d = (i / 64**e)
++         d = (i // 64**e)
+          rv += cls.base64_map[d]
+          i = i % (64**e)
+       return rv
+@@ -363,12 +363,12 @@
+             ('00-database-url', '00-database-url\n%s\n' % self.wn_url)):
+          word_data[key] = value
+       
+-      words = word_data.keys()
++      words = list(word_data.keys())
+       words.sort()
+       
+       for word in words:
+          wval = word_data[word]
+-         if (isinstance(wval, basestring)):
++         if (isinstance(wval, str)):
+             # special case: preformatted entries
+             self.dict_entry_write(file_index, file_data, word, wval)
+             continue
+@@ -415,15 +415,15 @@
+    wnd = WordnetDict(wn_url=options.wn_url, desc_short=options.desc_short, desc_long=options.desc_long)
+    
+    for i in range(0,len(args),2):
+-      print 'Opening index file %r...' % args[i]
+-      file_index = file(args[i])
+-      print 'Opening data file %r...' % args[i+1]
+-      file_data = file(args[i+1])
+-      print 'Parsing index file...'
++      print('Opening index file %r...' % args[i])
++      file_index = open(args[i])
++      print('Opening data file %r...' % args[i+1])
++      file_data = open(args[i+1])
++      print('Parsing index file...')
+       wnd.wn_dict_add(file_index, file_data, synset_wrap_cls=SynsetWrapperPointer)
+ 
+-   print 'All index files parsed. Parsing data input files and writing output to index file %r and data file %r.' % (options.oi, options.od)
++   print('All index files parsed. Parsing data input files and writing output to index file %r and data file %r.' % (options.oi, options.od))
+    
+-   wnd.dict_generate(file(options.oi, 'w'),file(options.od, 'w'))
+-   print 'All done.'
++   wnd.dict_generate(open(options.oi, 'w'),open(options.od, 'w'))
++   print('All done.')
+ 
+--- a/contrib/wordnet_structures/Makefile.am
++++ b/contrib/wordnet_structures/Makefile.am
+@@ -5,7 +5,7 @@
+ wn.index:
+ wn.dict.dz:
+ 	LC_ALL=C \
+-	python wordnet_structures.py \
++	python3 wordnet_structures.py \
+ 	         ../../dict/dbfiles/index.adv  ../../dict/dbfiles/data.adv \
+ 		 ../../dict/dbfiles/index.adj  ../../dict/dbfiles/data.adj \
+ 		 ../../dict/dbfiles/index.noun ../../dict/dbfiles/data.noun \
+--- a/contrib/wordnet_structures/Makefile.in
++++ b/contrib/wordnet_structures/Makefile.in
+@@ -371,7 +371,7 @@
+ wn.index:
+ wn.dict.dz:
+ 	LC_ALL=C \
+-	python wordnet_structures.py \
++	python3 wordnet_structures.py \
+ 	         ../../dict/dbfiles/index.adv  ../../dict/dbfiles/data.adv \
+ 		 ../../dict/dbfiles/index.adj  ../../dict/dbfiles/data.adj \
+ 		 ../../dict/dbfiles/index.noun ../../dict/dbfiles/data.noun \

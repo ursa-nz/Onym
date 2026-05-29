@@ -1,0 +1,15 @@
+Fix loop issue when look up the hypernyms of "inhibit".
+Author: Ben Haskell <ben@clarity.princeton.edu>
+Closes: #478803
+
+--- a/dict/dbfiles/verb.social
++++ b/dict/dbfiles/verb.social
+@@ -254,7 +254,7 @@
+ { [let, prevent,!] allow, permit, frames: 25,35 (make it possible through a specific action or lack of action for something to happen; "This permits the water to rush in"; "This sealed door won't allow the water come into the basement"; "This will permit the rain to run off") }
+ { pass11, allow,@ frames: 8 (allow to go without comment or censure; "the insult passed as if unnoticed") }
+ { give_up, allow1, frames: 8 (allow the other (baseball) team to score; "give up a run") }
+-{ inhibit, bottle_up, [ suppress, noun.act:suppression1,+ ] restrain1,@ frames: 8 (control and refrain from showing; of emotions, desires, impulses, or behavior) }
++{ inhibit, bottle_up, [ suppress, noun.act:suppression1,+ ] verb.cognition:suppress,@ frames: 8 (control and refrain from showing; of emotions, desires, impulses, or behavior) }
+ { choke, bottle_up,@ frames: 8 (check or slow down the action or effect of; "She choked her anger") }
+ { [ repress, adj.all:restrictive^repressive,+ noun.state:repression,+ noun.act:repression,+ ] quash, keep_down, [ subdue, noun.person:subduer,+ ] subjugate1, reduce3, oppress,@ frames: 9,8,10 (put down by force or intimidation; "The government quashes any attempt of an uprising"; "China keeps down her dissidents very efficiently"; "The rich landowners subjugated the peasants working the land") }
+ { [ dragoon1, noun.person:dragoon,+ ] subjugate,@ frames: 9,11 (subjugate by imposing troops)}

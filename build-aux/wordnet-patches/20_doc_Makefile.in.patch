@@ -1,0 +1,15 @@
+Do not build html, pdf and ps targets because they are not used in the package anyway.
+Just go with the man pages.
+Author: Andreas Tille <tille@debian.org>
+
+--- a/doc/Makefile.in
++++ b/doc/Makefile.in
+@@ -176,7 +176,7 @@ sysconfdir = @sysconfdir@
+ target_alias = @target_alias@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+-SUBDIRS = html man pdf ps
++SUBDIRS = man
+ all: all-recursive
+ 
+ .SUFFIXES:

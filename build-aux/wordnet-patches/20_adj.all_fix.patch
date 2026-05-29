@@ -1,0 +1,16 @@
+Description: Fix missing space in upstream database
+Author: Andreas Tille <tille@debian.org>
+Forwarded: wordnet@princeton.edu
+Bug-Debian: http://bugs.debian.org/544866
+
+--- a/dict/dbfiles/adj.all
++++ b/dict/dbfiles/adj.all
+@@ -11750,7 +11750,7 @@
+ { [ ATOMISTIC, noun.cognition:atomism1,+ noun.cognition:atomism,+ HOLISTIC,!] [ atomistical, noun.cognition:atomism1,+ noun.cognition:atomism,+ ] (divided into separate and often disparate elements) }]
+ 
+ [{ [ ARRANGED, DISARRANGED,!] ordered4, (disposed or placed in a particular kind of order; "the carefully arranged chessmen"; "haphazardly arranged interlobular septa"; "comfortable chairs arranged around the fireplace") }
+-{ laid, set, (set down according to a plan:"a carefully laid table with places set for four people"; "stones laid in a pattern") }
++{ laid, set, (set down according to a plan: "a carefully laid table with places set for four people"; "stones laid in a pattern") }
+ { placed, (put in position in relation to other things; "end tables placed conveniently") }
+ ----
+ { [ DISARRANGED, ARRANGED,!] (having the arrangement disturbed; not in order; "her disarranged hair") }

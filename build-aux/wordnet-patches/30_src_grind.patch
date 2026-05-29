@@ -1,0 +1,106 @@
+Add missing includes to work with gcc4.x
+Author: Andreas Tille <tille@debian.org>
+
+--- a/src/grind/create.c
++++ b/src/grind/create.c
+@@ -6,6 +6,7 @@
+ */
+ 
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <malloc.h>
+ #include <string.h>
+ #include "wngrind.h"
+--- a/src/grind/files.c
++++ b/src/grind/files.c
+@@ -5,6 +5,7 @@
+ */
+ 
+ #include <stdio.h>
++#include <string.h>
+ #include "wngrind.h"
+ 
+ static char *Id = "$Id: files.c,v 1.7 2005/01/31 20:03:36 wn Rel $";
+--- a/src/grind/grind.c
++++ b/src/grind/grind.c
+@@ -5,6 +5,7 @@
+ */
+ 
+ #include <stdio.h>
++#include <stdlib.h>
+ #include "wngrind.h"
+ 
+ static char *Id = "$Id: grind.c,v 1.33 2005/01/31 20:03:36 wn Rel $";
+@@ -18,11 +19,11 @@ int nominalizations = 0;
+ int synsetkeys = 0;
+ int extraflag = 0;
+ 
+-main(argc,argv)
++void main(argc,argv)
+ char **argv;
+ int argc;
+ {
+-    int i;
++    /* int i; */
+     char c;
+     
+     Argv=argv;
+--- a/src/grind/makedb.c
++++ b/src/grind/makedb.c
+@@ -5,6 +5,7 @@
+ */
+ 
+ #include <stdio.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include "wngrind.h"
+ 
+@@ -151,7 +152,7 @@ void DumpData()
+     for (ss = headss; ss; ss = ss->ssnext) {
+ 	if (ftell(ofile[ss->part]) != ss->filepos) {
+ 	    fprintf(logfile,
+-		    "%s: sanity error - actual pos %d != assigned pos %d!\n",
++		    "%s: sanity error - actual pos %ld != assigned pos %d!\n",
+ 		    Argv[0], ftell(ofile[ss->part]), ss->filepos);
+ 	    goto abortdump;
+ 	}
+@@ -239,7 +240,7 @@ static void DumpPointers(Pointer ptrs)
+ 
+     for (p = ptrs; p; p = p->pnext)
+ 	if (p->status == RESOLVED) {
+-	    fprintf(ofp,"%s %8.8d %c %2.2x%2.2x ",
++	    fprintf(ofp,"%s %8.8ld %c %2.2x%2.2x ",
+ 		    ptrsymbols[p->ptype],
+ 		    p->psynset->filepos,
+ 		    partchars[p->psynset->part],
+--- a/src/grind/resolve.c
++++ b/src/grind/resolve.c
+@@ -174,7 +174,7 @@ static void DoFanPointers(G_Synset clush
+ static void CheckSimilars(G_Synset clusheadss)
+ {
+     G_Synset fan;
+-    Pointer ref, lastp;
++    Pointer ref /*, lastp*/;
+ 
+     for (fan = clusheadss->fans; fan; fan = fan->ssnext) {
+ 	if (!HasSimilar(fan)) {	/* no similar in fan synset */
+@@ -219,7 +219,7 @@ static void CheckSimilars(G_Synset clush
+ 
+ static void ResolveIt(Pointer p, Synonym syn, G_Synset ss, int fanss)
+ {
+-    Pointer ref, lastp;
++    Pointer ref /*, lastp*/;
+ 
+     if ( syn->ss == ss && p->fromwdnum == ALLWORDS) {
+ 	fprintf(logfile, "Self-referential pointer: %s in file %s, line %d\n",
+--- a/src/grind/util.c
++++ b/src/grind/util.c
+@@ -4,6 +4,8 @@
+ 
+ */
+ 
++#include <ctype.h>
++#include <stdlib.h>
+ #include <string.h>
+ #include <malloc.h>
+ #include "wngrind.h"

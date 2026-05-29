@@ -1,0 +1,69 @@
+Author: Andreas Beckmann <anbe@debian.org>
+Description: fix typos
+
+--- a/doc/man/morphy.7
++++ b/doc/man/morphy.7
+@@ -140,7 +140,7 @@ so it may be advantageous to specify sev
+ results of a search attempt seem incomplete.
+ .SS Special Processing for nouns ending with 'ful'
+ Morphy contains code that searches for nouns ending with \fBful\fP
+-and performs a transformation on the substring preceeding it.  It then
++and performs a transformation on the substring preceding it.  It then
+ appends 'ful' back onto the resulting string and returns it. For
+ example, if passed the nouns \fBboxesful\fP, it will return \fBboxful\fP.
+ .SH BUGS
+--- a/lib/wnhelp.c
++++ b/lib/wnhelp.c
+@@ -167,14 +167,14 @@ in the hierarchy. \n\
+ 
+ static char deriv_help[] =	/* DERIVATION */
+ "Display derived forms - nouns and verbs that are related morphologically. \n\
+-Each related synset is preceeded by its part of speech. Each word in the \n\
++Each related synset is preceded by its part of speech. Each word in the \n\
+ synset is followed by its sense number. \n\
+ ";
+ 
+ static char domain_help[] = 	/* CLASSIFICATION */
+ "Display domain to which this synset belongs. \n\
+ \n\
+-Each domain synset is preceeded by \"TOPIC\", \"REGION\", or \"USAGE\" to \n\
++Each domain synset is preceded by \"TOPIC\", \"REGION\", or \"USAGE\" to \n\
+ distinguish topical, geographic and functional classifications, and \n\
+ it's part of speech.  Each word is followed by its sense number. \n\
+ ";
+@@ -182,7 +182,7 @@ it's part of speech.  Each word is follo
+ static char domainterms_help[] = /* CLASS */
+ "Display all synsets belonging to the domain. \n\
+ \n\
+-Each domain term synset is preceeded by \"TOPIC TERM\", \"REGION TERM\", or \n\
++Each domain term synset is preceded by \"TOPIC TERM\", \"REGION TERM\", or \n\
+ \"USAGE TERM\" to distinguish topical, geographic and functional classes, \n\
+ and its part of speech. Each word is followed by its sense number. \n\
+ ";
+@@ -199,7 +199,7 @@ static char tropo_help[] =	/* -HYPOPTR *
+ "Display hyponym tree for the search string.  This is \n\
+ a recursive search that finds the hyponyms of each hyponym.  \n\
+ \n\
+-For verbs, hyponyms are refered to as troponyms.  Troponyms indicate particular ways \n\
++For verbs, hyponyms are referred to as troponyms.  Troponyms indicate particular ways \n\
+ to perform a function.  X is a hyponym of Y if to X is a particular way to Y. \n\
+ \n\
+ Troponym synsets are preceded by \"=>\", and are indented from the left \n\
+@@ -235,7 +235,7 @@ Verb sentence frames are preceded with t
+ frame is acceptable for all of the words in the synset, and with \"=>\" \n\
+ if a sentence frame is acceptable for the search string only.  \n\
+ \n\
+-Some verb senses have example sentences.  These are preceeded with \"EX:\". \n\
++Some verb senses have example sentences.  These are preceded with \"EX:\". \n\
+ ";
+ 
+ static char *nounhelps[] = {
+@@ -286,7 +286,7 @@ pertains to is displayed. \n\
+ \n\
+ A cluster is a group of adjective synsets that are organized around \n\
+ antonymous pairs or triplets.  An adjective cluster contains two or more \n\
+-head synsets that contan antonyms.  Each head synset has one or more \n\
++head synsets that contain antonyms.  Each head synset has one or more \n\
+ satellite synsets. \n\
+ \n\
+ A head synset contains at least one word that has a direct antonym \n\

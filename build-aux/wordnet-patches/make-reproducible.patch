@@ -1,0 +1,42 @@
+--- a/contrib/wordnet_structures/Makefile.am
++++ b/contrib/wordnet_structures/Makefile.am
+@@ -16,7 +16,7 @@
+ 		exit -1 ; \
+ 	    fi
+ 	if [ "$(DICTZIP)" != "cat" ]; then \
+-	    dictzip wn.dict; \
++	    dictzip -n wn.dict; \
+ 	fi
+ 
+ EXTRA_DIST = COPYING README wordnet_structures.py
+--- a/contrib/wordnet_structures/Makefile.in
++++ b/contrib/wordnet_structures/Makefile.in
+@@ -382,7 +382,7 @@
+ 		exit -1 ; \
+ 	    fi
+ 	if [ "$(DICTZIP)" != "cat" ]; then \
+-	    dictzip wn.dict; \
++	    dictzip -n wn.dict; \
+ 	fi
+ # Tell versions [3.59,3.63) of GNU make to not export all variables.
+ # Otherwise a system limit (for SysV at least) may be exceeded.
+--- a/contrib/wordnet_structures/wordnet_structures.py
++++ b/contrib/wordnet_structures/wordnet_structures.py
+@@ -25,6 +25,8 @@
+ # correctly, and create output very similar to what wnfilter would have 
+ # written.
+ 
++import time
++import os
+ import datetime
+ from textwrap import TextWrapper
+ 
+@@ -351,7 +353,7 @@
+       # -- problem encountered with 1.10.2, at 2007-08-05.
+       file_data.write('\n')
+       wn_url = self.wn_url
+-      conversion_datetime = datetime.datetime.now().strftime(self.datetime_fmt)
++      conversion_datetime = datetime.datetime.utcfromtimestamp(int(os.environ.get('SOURCE_DATE_EPOCH', time.time())))
+       wn_license = self.wn_license
+ 
+       word_data = self.word_data.copy()
