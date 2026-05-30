@@ -21,8 +21,16 @@ SPDX-License-Identifier: FSFAP
 
   <screenshots>
     <screenshot type="default">
-      <image type="source">https://forge.ursa.nz/ursa-nz/Onym/raw/branch/main/data/screenshots/onym-overview.png</image>
-      <caption>A word with its meanings, synonyms, antonyms, and relations</caption>
+      <image type="source">https://forge.ursa.nz/ursa-nz/Onym/raw/branch/main/data/screenshots/onym-result.png</image>
+      <caption>A word with its meanings, synonyms, and the relations that connect it</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://forge.ursa.nz/ursa-nz/Onym/raw/branch/main/data/screenshots/onym-relations.png</image>
+      <caption>Lexical relations shown as expandable trees</caption>
+    </screenshot>
+    <screenshot>
+      <image type="source">https://forge.ursa.nz/ursa-nz/Onym/raw/branch/main/data/screenshots/onym-about.png</image>
+      <caption>About Onym</caption>
     </screenshot>
   </screenshots>
 
