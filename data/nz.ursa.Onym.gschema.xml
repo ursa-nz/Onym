@@ -11,7 +11,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
   </enum>
   <schema id="nz.ursa.Onym" path="/nz/ursa/Onym/">
     <key name="window-width" type="i">
-      <default>440</default>
+      <default>480</default>
       <summary>Window width</summary>
     </key>
     <key name="window-height" type="i">
