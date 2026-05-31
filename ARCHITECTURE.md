@@ -66,6 +66,15 @@ exported so the unit tests can exercise them without any WordNet data.
 
 ## Tests
 
-`meson test` runs two suites. `test-index` covers the pure helpers and needs no data, so it always
+`meson test` runs four checks. `test-index` covers the pure helpers and needs no data, so it always
 runs. `test-lookup` exercises real lookups and asserts structural facts rather than exact glosses, so
-it stays robust across WordNet releases; it skips itself when the database is absent.
+it stays robust across WordNet releases; it skips itself when the database is absent. Two more
+validate the packaging: `appstreamcli validate --strict` over the metainfo and `desktop-file-validate`
+over the desktop entry, each run when its tool is present.
+
+## Packaging
+
+The `data/` directory holds the GSettings schema, the icons, the desktop entry, and the AppStream
+metainfo. For distribution, the Flatpak manifest in `build-aux/` bundles WordNet so the application
+needs nothing installed: the library is built there from Debian's patched source and the database
+comes from Debian's prebuilt package, both kept distinct from the vendored Artha engine.

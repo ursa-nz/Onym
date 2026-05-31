@@ -17,7 +17,10 @@ libadwaita application around that engine, built to feel at home on GNOME 50 and
 
 ## Status
 
-The library and a headless command line tool work today. The graphical application is in progress.
+Onym is functional: the GTK4 and libadwaita application, the `libonym` library, and a headless
+command line tool. The application shows meanings grouped by part of speech with examples, then
+synonyms, antonyms, and the lexical relation trees, with live search, history, and an accessibility
+pass. It ships an icon, a desktop entry, AppStream metainfo, and a Flatpak that bundles WordNet.
 
 - `libonym` is an installable library that turns a word into a structured result. It is the reusable
   core, with a stable model, a pkg-config file, and GObject Introspection so it binds from C, Python,
@@ -44,6 +47,16 @@ Try it:
 ./_build/tools/onym-cli --complete sere
 ```
 
+## Flatpak
+
+A Flatpak manifest is at `build-aux/nz.ursa.Onym.yaml`, building against `org.gnome.Platform`. It
+bundles WordNet, so the Flatpak needs nothing else installed:
+
+```
+flatpak-builder --user --install --force-clean _flatpak build-aux/nz.ursa.Onym.yaml
+flatpak run nz.ursa.Onym
+```
+
 ## How the code is organised
 
 Onym is three layers, so the one piece of borrowed code stays sealed off and the rest stays easy to
@@ -64,7 +77,7 @@ parses anything itself. `ARCHITECTURE.md` describes the layers and the files in 
 Onym is free software under the GPL, version 3 or later. See `COPYING`.
 
 - WordNet is provided by Princeton University under its own permissive licence. Its notice ships with
-  the bundled database.
+  the bundled database. The patched build the Flatpak uses is maintained by the Debian project.
 - The query engine is derived from Artha by Sundaram Ramaswamy, under the GPL, version 2 or later.
   See `libonym/engine/PROVENANCE.md`.
 - Onym is built with GTK, libadwaita, and GLib from the GNOME project.
