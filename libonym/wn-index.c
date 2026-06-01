@@ -202,7 +202,7 @@ wn_index_complete (WnIndex *self, const char *prefix, guint max_results)
 
   if (self != NULL && prefix != NULL && *prefix != '\0')
     {
-      char *needle = g_ascii_strdown (g_strdelimit (g_strdup (prefix), "_", ' '), -1);
+      char *needle = g_strdelimit (g_ascii_strdown (prefix, -1), "_", ' ');
       for (guint i = lower_bound (self->lemmas, needle);
            i < self->lemmas->len && (max_results == 0 || out->len < max_results);
            i++)
@@ -242,7 +242,7 @@ wn_index_suggest (WnIndex *self, const char *word, guint max_results)
 
   if (self != NULL && word != NULL && *word != '\0')
     {
-      char *needle = g_ascii_strdown (g_strdelimit (g_strdup (word), "_", ' '), -1);
+      char *needle = g_strdelimit (g_ascii_strdown (word, -1), "_", ' ');
       gsize needle_len = strlen (needle);
       GArray *candidates = g_array_new (FALSE, FALSE, sizeof (Candidate));
 
