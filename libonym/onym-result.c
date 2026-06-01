@@ -56,6 +56,14 @@ onym_word_new (const char *term)
   return self;
 }
 
+/**
+ * onym_word_get_term:
+ * @self: an OnymWord
+ *
+ * The term, in display form.
+ *
+ * Returns: (transfer none): the term
+ */
 const char *
 onym_word_get_term (OnymWord *self)
 {
@@ -108,6 +116,14 @@ onym_definition_new (const char *pos, const char *gloss, GStrv examples)
   return self;
 }
 
+/**
+ * onym_definition_get_pos:
+ * @self: an OnymDefinition
+ *
+ * The part of speech, such as "noun", or %NULL when the sense has none.
+ *
+ * Returns: (transfer none) (nullable): the part of speech, or %NULL
+ */
 const char *
 onym_definition_get_pos (OnymDefinition *self)
 {
@@ -115,6 +131,14 @@ onym_definition_get_pos (OnymDefinition *self)
   return self->pos;
 }
 
+/**
+ * onym_definition_get_gloss:
+ * @self: an OnymDefinition
+ *
+ * The defining text of this sense.
+ *
+ * Returns: (transfer none): the gloss
+ */
 const char *
 onym_definition_get_gloss (OnymDefinition *self)
 {
@@ -122,6 +146,14 @@ onym_definition_get_gloss (OnymDefinition *self)
   return self->gloss;
 }
 
+/**
+ * onym_definition_get_examples:
+ * @self: an OnymDefinition
+ *
+ * The example sentences for this sense, or %NULL when there are none.
+ *
+ * Returns: (transfer none) (nullable) (array zero-terminated=1): the examples, or %NULL
+ */
 const char * const *
 onym_definition_get_examples (OnymDefinition *self)
 {
@@ -183,6 +215,14 @@ onym_antonym_add_implication (OnymAntonym *self, const char *term)
   g_object_unref (word);
 }
 
+/**
+ * onym_antonym_get_term:
+ * @self: an OnymAntonym
+ *
+ * The opposite term, in display form.
+ *
+ * Returns: (transfer none): the term
+ */
 const char *
 onym_antonym_get_term (OnymAntonym *self)
 {
@@ -190,6 +230,14 @@ onym_antonym_get_term (OnymAntonym *self)
   return self->term;
 }
 
+/**
+ * onym_antonym_get_direct:
+ * @self: an OnymAntonym
+ *
+ * Whether this is a direct antonym, as opposed to an indirect one reached through a similar sense.
+ *
+ * Returns: %TRUE if direct, %FALSE if indirect
+ */
 gboolean
 onym_antonym_get_direct (OnymAntonym *self)
 {
@@ -267,6 +315,14 @@ onym_tree_node_add_child (OnymTreeNode *self, OnymTreeNode *child)
   g_object_unref (child);
 }
 
+/**
+ * onym_tree_node_get_label:
+ * @self: an OnymTreeNode
+ *
+ * The node's terms joined for display.
+ *
+ * Returns: (transfer none): the label
+ */
 const char *
 onym_tree_node_get_label (OnymTreeNode *self)
 {
@@ -274,6 +330,14 @@ onym_tree_node_get_label (OnymTreeNode *self)
   return self->label;
 }
 
+/**
+ * onym_tree_node_get_terms:
+ * @self: an OnymTreeNode
+ *
+ * The synset's terms, each one a word that can be looked up.
+ *
+ * Returns: (transfer none) (array zero-terminated=1): the terms
+ */
 const char * const *
 onym_tree_node_get_terms (OnymTreeNode *self)
 {
@@ -368,6 +432,14 @@ onym_section_add (OnymSection *self, gpointer item)
   g_object_unref (item);
 }
 
+/**
+ * onym_section_get_kind:
+ * @self: an OnymSection
+ *
+ * The kind of the section, which tells a consumer the GObject type of its items.
+ *
+ * Returns: the section kind
+ */
 OnymSectionKind
 onym_section_get_kind (OnymSection *self)
 {
@@ -375,6 +447,14 @@ onym_section_get_kind (OnymSection *self)
   return self->kind;
 }
 
+/**
+ * onym_section_get_title:
+ * @self: an OnymSection
+ *
+ * The section's display title.
+ *
+ * Returns: (transfer none): the title
+ */
 const char *
 onym_section_get_title (OnymSection *self)
 {
@@ -450,6 +530,14 @@ onym_result_add_section (OnymResult *self, OnymSection *section)
   g_object_unref (section);
 }
 
+/**
+ * onym_result_get_term:
+ * @self: an OnymResult
+ *
+ * The resolved headword, which may differ from the query when WordNet applies morphology.
+ *
+ * Returns: (transfer none): the headword
+ */
 const char *
 onym_result_get_term (OnymResult *self)
 {

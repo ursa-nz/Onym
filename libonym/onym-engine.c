@@ -54,6 +54,14 @@ onym_engine_init (OnymEngine *self)
 {
 }
 
+/**
+ * onym_engine_new:
+ *
+ * Create an engine. The WordNet data directory is resolved on the first lookup, and the lemma index
+ * loads lazily on the first completion or suggestion.
+ *
+ * Returns: (transfer full): a new #OnymEngine
+ */
 OnymEngine *
 onym_engine_new (void)
 {
