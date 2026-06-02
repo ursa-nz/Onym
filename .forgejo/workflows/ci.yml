@@ -42,7 +42,8 @@ jobs:
       - name: Test
         run: meson test -C _build --print-errorlogs
 
-  # Lint the Flatpak manifest with the Flathub linter image. desktop-file-validate and
+  # Lint the Flatpak manifest with the Flathub linter image. This is the fast check: it fails on a
+  # broken manifest without waiting for the full build below. desktop-file-validate and
   # appstreamcli validate --strict already run in the build job through meson test.
   flatpak-manifest:
     runs-on: ubuntu-latest
@@ -52,3 +53,40 @@ jobs:
       - uses: actions/checkout@v4
       - name: Lint the Flatpak manifest
         run: flatpak-builder-lint manifest build-aux/nz.ursa.Onym.yaml
+
+  # Build the Flatpak for real with flatpak-builder, then lint the built result and export the
+  # bundle. This pulls the GNOME 50 runtime and Sdk and builds the bundled WordNet from source, so
+  # it is the slow job. The built-result lint fetches the screenshots named in the metainfo, which
+  # resolve now that the repository is public. flatpak-builder is run directly rather than through
+  # the flatpak-github-actions action, which targets GitHub; the commands run unchanged on Forgejo.
+  flatpak-build:
+    runs-on: ubuntu-latest
+    container:
+      # The Flathub builder image ships flatpak-builder, flatpak-builder-lint, and the GNOME 50
+      # runtime and Sdk. flatpak-builder needs bubblewrap, so the container must be privileged.
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+
+      # rofiles-fuse needs a FUSE device the runner may not grant, so disable it. install-deps-from
+      # fills in the runtime and Sdk should the image not have baked them in.
+      - name: Build
+        run: |
+          flatpak-builder --user --disable-rofiles-fuse --install-deps-from=flathub \
+            --repo=repo --force-clean builddir build-aux/nz.ursa.Onym.yaml
+
+      # Lint the built tree against the appstream and Flatpak rules, the screenshots among them.
+      - name: Lint the built result
+        run: flatpak-builder-lint repo repo
+
+      - name: Bundle
+        run: |
+          flatpak build-bundle repo onym.flatpak nz.ursa.Onym \
+            --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Upload the bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: onym-flatpak
+          path: onym.flatpak
