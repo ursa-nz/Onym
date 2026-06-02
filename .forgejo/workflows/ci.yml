@@ -69,11 +69,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # rofiles-fuse needs a FUSE device the runner may not grant, so disable it. install-deps-from
-      # fills in the runtime and Sdk should the image not have baked them in.
+      # Build against the system installation, where the image has baked the GNOME 50 runtime and
+      # Sdk, rather than the per-user one, which is empty and has no remote (the runner sets HOME to
+      # a temporary directory). Add the flathub remote as a safety net so install-deps-from resolves
+      # if a dependency is missing. rofiles-fuse needs a FUSE device the runner may not grant, so
+      # disable it.
       - name: Build
         run: |
-          flatpak-builder --user --disable-rofiles-fuse --install-deps-from=flathub \
+          flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+          flatpak-builder --disable-rofiles-fuse --install-deps-from=flathub \
             --repo=repo --force-clean builddir build-aux/nz.ursa.Onym.yaml
 
       # Lint the built tree against the appstream and Flatpak rules, the screenshots among them.
