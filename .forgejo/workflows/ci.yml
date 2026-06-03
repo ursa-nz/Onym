@@ -74,10 +74,16 @@ jobs:
       # a temporary directory). Add the flathub remote as a safety net so install-deps-from resolves
       # if a dependency is missing. rofiles-fuse needs a FUSE device the runner may not grant, so
       # disable it.
+      #
+      # mirror-screenshots-url downloads the screenshots named in the metainfo, which resolve now
+      # that the repository is public, and embeds them in the OSTree commit. This is what clears the
+      # appstream screenshot checks in the lint below: that mirroring cannot be skipped with an
+      # exception, it has to be done at build time, exactly as Flathub's own pipeline does it.
       - name: Build
         run: |
           flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak-builder --disable-rofiles-fuse --install-deps-from=flathub \
+            --mirror-screenshots-url=https://dl.flathub.org/media --compose-url-policy=full \
             --repo=repo --force-clean builddir build-aux/nz.ursa.Onym.yaml
 
       # Lint the built tree against the appstream and Flatpak rules, the screenshots among them.
