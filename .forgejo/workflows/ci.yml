@@ -95,8 +95,9 @@ jobs:
           flatpak build-bundle repo onym.flatpak nz.ursa.Onym \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
+      # v3, not v4: the v4 artifact protocol is not implemented by Forgejo's GHES-compatible API.
       - name: Upload the bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: onym-flatpak
           path: onym.flatpak
