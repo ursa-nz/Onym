@@ -9,11 +9,11 @@ SPDX-License-Identifier: FSFAP
   <project_license>GPL-3.0-or-later</project_license>
 
   <name>Onym</name>
-  <summary>Thesaurus and dictionary built on WordNet</summary>
+  <summary>Thesaurus of synonyms, antonyms, and word relations</summary>
 
   <description>
-    <p>Onym is a thesaurus and dictionary for GNOME. Type a word and Onym shows its meanings grouped by part of speech, with example sentences, then its synonyms, its antonyms, and the lexical relations that connect it to other words.</p>
-    <p>Every word on screen is a link, so you look one up just by clicking it. Search is live, with completion as you type and a suggestion when a word is misspelt.</p>
+    <p>Onym is a thesaurus for GNOME. Look a word up and Onym shows its synonyms and antonyms, then the lexical relations that connect it to other words: what it is a kind of, its kinds, and the wholes and parts it belongs to, each shown as a tree you can open.</p>
+    <p>Every word on screen is a link, so one lookup leads to the next with a click. Each entry also carries its meanings, grouped by part of speech and shown with example sentences, so the senses stay in view while you explore. Search is live, with completion as you type and a suggestion when a word is misspelt.</p>
     <p>The word data comes from WordNet, the lexical database from Princeton University. The query engine is derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy.</p>
   </description>
 
