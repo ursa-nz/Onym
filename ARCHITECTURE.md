@@ -13,11 +13,11 @@ a stable interface, and it lets other projects reuse the library to build their 
 
 Onym has three layers, and the boundary between each one is deliberate.
 
-- The application is the GTK4 and libadwaita interface. It links libonym and reads the public model. 
+- The application is the GTK4 and libadwaita interface. It links libonym and reads the public model.
   It never refers to WordNet or Artha types.
-- libonym is the installable library, with a pkg-config file, a GIR, and installed headers. 
-  Its public face is the OnymEngine object, which looks words up and offers completion and 
-  suggestions, and the model that a lookup returns. Inside it, the bridge in onym-lookup is 
+- libonym is the installable library, with a pkg-config file, a GIR, and installed headers.
+  Its public face is the OnymEngine object, which looks words up and offers completion and
+  suggestions, and the model that a lookup returns. Inside it, the bridge in onym-lookup is
   the only caller of the engine, and wn-index holds the lemma index that backs completion and suggestions.
 - The engine is the WordNet code vendored in engine/. It is the only caller of the WordNet C library.
 
