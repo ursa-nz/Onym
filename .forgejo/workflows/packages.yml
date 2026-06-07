@@ -41,7 +41,7 @@ jobs:
       - name: Upload the .deb
         uses: actions/upload-artifact@v3
         with:
-          name: onym-deb
+          name: onym_amd64.deb
           path: dist/*.deb
 
   # A portable AppImage that bundles GTK4, libadwaita, the WordNet runtime and
@@ -75,5 +75,5 @@ jobs:
       - name: Upload the AppImage
         uses: actions/upload-artifact@v3
         with:
-          name: onym-appimage
+          name: Onym-x86_64.AppImage
           path: Onym-*.AppImage

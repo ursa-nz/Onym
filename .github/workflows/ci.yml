@@ -89,5 +89,5 @@ jobs:
       - name: Upload the bundle
         uses: actions/upload-artifact@v4
         with:
-          name: onym-flatpak
+          name: onym.flatpak
           path: onym.flatpak
