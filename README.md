@@ -11,9 +11,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 Onym is a thesaurus and dictionary for GNOME, built on WordNet. You type a word and Onym shows its
 meanings grouped by part of speech, with example sentences, then its synonyms, its antonyms, and the
-lexical relations that connect it to other words. Every word on screen is a link, so you look one up
-just by clicking it. Search is live, with completion as you type and a suggestion when a word is
-misspelt.
+lexical relations that connect it to other words. Those related terms are clickable, so one lookup
+leads to the next with a click. Search is live, with completion as you type and a suggestion when a
+word is misspelt.
 
 The word data comes from WordNet, the lexical database from Princeton University. The query engine is
 derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy. Onym is a fresh GTK4 and
