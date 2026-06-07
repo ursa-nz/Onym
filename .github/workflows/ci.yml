@@ -59,8 +59,9 @@ jobs:
 
   # Build the Flatpak for real with flatpak-builder, then lint the built result and export the
   # bundle. This pulls the GNOME 50 runtime and Sdk and builds the bundled WordNet from source, so
-  # it is the slow job. mirror-screenshots-url embeds the screenshots named in the metainfo into the
-  # OSTree commit, which is what clears the appstream screenshot checks in the built-result lint.
+  # it is the slow job. mirror-screenshots-url embeds the screenshots into the OSTree commit and
+  # rewrites the metainfo to our own software.ursa.nz/flatpak/media base (served by software-publish
+  # on atutahi), which clears the appstream screenshot checks in the built-result lint.
   flatpak-build:
     runs-on: ubuntu-latest
     container:
@@ -75,7 +76,7 @@ jobs:
         run: |
           flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
           flatpak-builder --disable-rofiles-fuse --install-deps-from=flathub \
-            --mirror-screenshots-url=https://dl.flathub.org/media --compose-url-policy=full \
+            --mirror-screenshots-url=https://software.ursa.nz/flatpak/media --compose-url-policy=full \
             --repo=repo --force-clean builddir build-aux/nz.ursa.Onym.yaml
 
       - name: Lint the built result
