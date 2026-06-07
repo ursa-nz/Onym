@@ -1,0 +1,39 @@
+Source: onym
+Section: utils
+Priority: optional
+Maintainer: ursa.nz <code@ursa.nz>
+Build-Depends:
+ debhelper-compat (= 13),
+ meson (>= 1.0.0),
+ ninja-build,
+ pkgconf,
+ libglib2.0-dev (>= 2.74),
+ libgtk-4-dev (>= 4.14),
+ libadwaita-1-dev (>= 1.5),
+ wordnet-dev,
+ wordnet-base,
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+Homepage: https://ursa.nz
+Vcs-Browser: https://forge.ursa.nz/ursa-nz/Onym
+Vcs-Git: https://forge.ursa.nz/ursa-nz/Onym.git
+
+Package: onym
+Architecture: any
+Depends:
+ ${shlibs:Depends},
+ ${misc:Depends},
+ wordnet-base,
+Description: thesaurus and dictionary for GNOME built on WordNet
+ Onym is a thesaurus for GNOME. Look a word up and it shows the word's
+ synonyms and antonyms, then the lexical relations that connect it to other
+ words: what it is a kind of, its kinds, and the wholes and parts it belongs
+ to, each as a tree you can open. Every word on screen is a link, so one
+ lookup leads to the next with a click.
+ .
+ Each entry also carries its meanings, grouped by part of speech and shown
+ with example sentences. Search is live, with completion as you type and a
+ suggestion when a word is misspelt.
+ .
+ The word data comes from WordNet, the lexical database from Princeton
+ University. The query engine is derived from Artha.

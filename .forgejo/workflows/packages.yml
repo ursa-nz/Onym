@@ -1,0 +1,75 @@
+# SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Packages
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+jobs:
+  # A native Debian/Ubuntu package, built with debhelper. libonym is static, so
+  # the package is just the application and its data; it depends on the system
+  # WordNet. Built on 26.04 to match the changelog series.
+  deb:
+    runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates git nodejs \
+            build-essential debhelper meson ninja-build pkgconf \
+            libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
+            wordnet-dev wordnet-base \
+            appstream desktop-file-utils lintian
+
+      - uses: actions/checkout@v4
+
+      - name: Build the .deb
+        run: dpkg-buildpackage -us -uc -b
+
+      - name: Lint the .deb
+        run: lintian ../onym_*.deb || true
+
+      - name: Collect the artifact
+        run: |
+          mkdir -p dist
+          cp ../onym_*.deb dist/
+
+      - name: Upload the .deb
+        uses: actions/upload-artifact@v3
+        with:
+          name: onym-deb
+          path: dist/*.deb
+
+  # A portable AppImage that bundles GTK4, libadwaita, the WordNet runtime and
+  # the WordNet database. Built on the older 24.04 LTS, which already meets the
+  # GTK 4.14 and libadwaita 1.5 floors, so the glibc requirement stays low and
+  # the AppImage runs on a wider range of distributions. librsvg2-common ships
+  # the SVG pixbuf loader the icon needs, so it gets bundled.
+  appimage:
+    runs-on: ubuntu-latest
+    container: ubuntu:24.04
+    steps:
+      - name: Install build dependencies
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl file git nodejs \
+            meson ninja-build gcc pkgconf \
+            libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
+            wordnet-dev wordnet-base \
+            librsvg2-common
+
+      - uses: actions/checkout@v4
+
+      - name: Build the AppImage
+        run: ./build-aux/appimage/build-appimage.sh
+
+      - name: Upload the AppImage
+        uses: actions/upload-artifact@v3
+        with:
+          name: onym-appimage
+          path: Onym-*.AppImage

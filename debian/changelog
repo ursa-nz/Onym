@@ -1,0 +1,5 @@
+onym (0.1.0-1) resolute; urgency=medium
+
+  * Initial Debian packaging.
+
+ -- ursa.nz <code@ursa.nz>  Sun, 07 Jun 2026 18:59:22 +1000

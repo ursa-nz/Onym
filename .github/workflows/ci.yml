@@ -56,9 +56,8 @@ jobs:
 
   # Build the Flatpak for real with flatpak-builder, then lint the built result and export the
   # bundle. This pulls the GNOME 50 runtime and Sdk and builds the bundled WordNet from source, so
-  # it is the slow job. The built-result lint fetches the screenshots named in the metainfo, which
-  # resolve now that the repository is public. flatpak-builder is run directly rather than through
-  # the flatpak-github-actions action, which targets GitHub; the commands run unchanged on Forgejo.
+  # it is the slow job. mirror-screenshots-url embeds the screenshots named in the metainfo into the
+  # OSTree commit, which is what clears the appstream screenshot checks in the built-result lint.
   flatpak-build:
     runs-on: ubuntu-latest
     container:
@@ -69,16 +68,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build against the system installation, where the image has baked the GNOME 50 runtime and
-      # Sdk, rather than the per-user one, which is empty and has no remote (the runner sets HOME to
-      # a temporary directory). Add the flathub remote as a safety net so install-deps-from resolves
-      # if a dependency is missing. rofiles-fuse needs a FUSE device the runner may not grant, so
-      # disable it.
-      #
-      # mirror-screenshots-url downloads the screenshots named in the metainfo, which resolve now
-      # that the repository is public, and embeds them in the OSTree commit. This is what clears the
-      # appstream screenshot checks in the lint below: that mirroring cannot be skipped with an
-      # exception, it has to be done at build time, exactly as Flathub's own pipeline does it.
       - name: Build
         run: |
           flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -86,7 +75,6 @@ jobs:
             --mirror-screenshots-url=https://dl.flathub.org/media --compose-url-policy=full \
             --repo=repo --force-clean builddir build-aux/nz.ursa.Onym.yaml
 
-      # Lint the built tree against the appstream and Flatpak rules, the screenshots among them.
       - name: Lint the built result
         run: flatpak-builder-lint repo repo
 
@@ -95,9 +83,8 @@ jobs:
           flatpak build-bundle repo onym.flatpak nz.ursa.Onym \
             --runtime-repo=https://flathub.org/repo/flathub.flatpakrepo
 
-      # v3, not v4: the v4 artifact protocol is not implemented by Forgejo's GHES-compatible API.
       - name: Upload the bundle
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: onym-flatpak
           path: onym.flatpak

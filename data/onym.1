@@ -1,0 +1,35 @@
+.\" SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+.\" SPDX-License-Identifier: GPL-3.0-or-later
+.TH ONYM 1 2026-06-07 "Onym 0.1.0" "User Commands"
+.SH NAME
+onym \- thesaurus and dictionary for GNOME built on WordNet
+.SH SYNOPSIS
+.B onym
+.RI [ word ]
+.SH DESCRIPTION
+.B Onym
+is a thesaurus and dictionary for GNOME, built on WordNet. It shows a word's
+meanings grouped by part of speech, with example sentences, then its synonyms,
+its antonyms, and the lexical relations that connect it to other words. Every
+word on screen is a link, so one lookup leads to the next with a click. Search
+is live, with completion as you type and a suggestion when a word is misspelt.
+.PP
+With no argument, Onym opens to its search field. Given a
+.IR word ,
+it opens showing that word.
+.SH ENVIRONMENT
+.TP
+.B WNSEARCHDIR
+The directory holding the WordNet database. When it is unset, Onym falls back to
+.IR $WNHOME/dict ,
+then to the directory chosen at build time.
+.SH FILES
+.TP
+.I /usr/share/wordnet
+The WordNet database, as provided by the
+.B wordnet-base
+package.
+.SH SEE ALSO
+.BR wn (1)
+.SH AUTHOR
+ursa.nz <code@ursa.nz>

@@ -21,3 +21,10 @@ path = ["build-aux/wordnet-patches/*.patch", "build-aux/wordnet-patches/series"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "the Debian WordNet maintainers"
 SPDX-License-Identifier = "GPL-2.0-or-later"
+
+# Debian packaging files, which keep to their own formats and carry no inline header.
+[[annotations]]
+path = ["debian/changelog", "debian/control", "debian/copyright", "debian/not-installed", "debian/onym.install", "debian/source/format"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 ursa.nz <code@ursa.nz>"
+SPDX-License-Identifier = "GPL-3.0-or-later"

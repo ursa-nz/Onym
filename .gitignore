@@ -14,3 +14,17 @@
 # Editor and tooling
 compile_commands.json
 .cache/
+
+# Debian packaging build artifacts
+/obj-*/
+/debian/tmp/
+/debian/onym/
+/debian/files
+/debian/.debhelper/
+/debian/debhelper-build-stamp
+/debian/*.substvars
+/debian/*.debhelper.log
+
+# AppImage build
+/_appimage/
+/Onym-*.AppImage

@@ -1,0 +1,7 @@
+usr/bin/onym
+usr/share/applications/nz.ursa.Onym.desktop
+usr/share/glib-2.0/schemas/nz.ursa.Onym.gschema.xml
+usr/share/icons/hicolor/scalable/apps/nz.ursa.Onym.svg
+usr/share/icons/hicolor/symbolic/apps/nz.ursa.Onym-symbolic.svg
+usr/share/man/man1/onym.1
+usr/share/metainfo/nz.ursa.Onym.metainfo.xml

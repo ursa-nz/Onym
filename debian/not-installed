@@ -1,0 +1,5 @@
+usr/lib/*/libonym.a
+usr/lib/*/pkgconfig/onym.pc
+usr/include/onym/onym.h
+usr/include/onym/onym-engine.h
+usr/include/onym/onym-result.h

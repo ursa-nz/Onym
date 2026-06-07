@@ -12,6 +12,9 @@ gnome.post_install(glib_compile_schemas: true, gtk_update_icon_cache: true)
 
 subdir('icons')
 
+# Manual page.
+install_man('onym.1')
+
 # AppStream metainfo, merged with translations and installed.
 i18n = import('i18n')
 metainfo_file = i18n.merge_file(

@@ -584,7 +584,8 @@ onym_window_dispose (GObject *object)
   OnymWindow *self = ONYM_WINDOW (object);
 
   g_clear_handle_id (&self->debounce_id, g_source_remove);
-  g_clear_pointer ((GtkWidget **) &self->completion_popover, gtk_widget_unparent);
+  if (self->completion_popover != NULL)
+    gtk_widget_unparent (GTK_WIDGET (g_steal_pointer (&self->completion_popover)));
   g_clear_object (&self->engine);
   g_clear_object (&self->current_result);
   g_clear_object (&self->settings);
