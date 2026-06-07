@@ -82,7 +82,16 @@ fetch() { # url dest
 fetch "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-${arch}.AppImage" "${tools}/linuxdeploy"
 fetch "https://raw.githubusercontent.com/linuxdeploy/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh" "${tools}/linuxdeploy-plugin-gtk.sh"
 
-# 5. Assemble. The GTK plugin bundles GTK4/libadwaita, the gdk-pixbuf loaders,
+# 5. linuxdeploy-plugin-gtk unconditionally copies GTK's loadable-module
+#    directory (lib/<triplet>/gtk-4.0). Current GTK 4 on Debian/Ubuntu builds its
+#    print and media backends in and ships no modules there, so the directory is
+#    absent and the plugin's copy aborts. Create it empty, which the app can
+#    afford as it loads no GTK modules, so the plugin completes. This writes to
+#    the GTK libdir, which the CI container has as root.
+gtk4_moduledir="$(pkg-config --variable=libdir gtk4)/gtk-4.0"
+mkdir -p "$gtk4_moduledir"
+
+# 6. Assemble. The GTK plugin bundles GTK4/libadwaita, the gdk-pixbuf loaders,
 #    the GIO modules, the icon theme and the compiled GSettings schemas;
 #    linuxdeploy bundles the binary's own libraries, the WordNet runtime among
 #    them, and writes the final AppImage.

@@ -31,7 +31,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: REUSE lint
-        run: pipx run reuse lint
+        # reuse is fetched from PyPI at run time and the current release refuses
+        # to start without an encoding-detection module. Pull the
+        # charset-normalizer extra so the install is self-contained.
+        run: pipx run --spec 'reuse[charset-normalizer]' reuse lint
 
       - name: Configure
         run: meson setup _build

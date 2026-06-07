@@ -7,6 +7,7 @@ Build-Depends:
  meson (>= 1.0.0),
  ninja-build,
  pkgconf,
+ gettext,
  libglib2.0-dev (>= 2.74),
  libgtk-4-dev (>= 4.14),
  libadwaita-1-dev (>= 1.5),

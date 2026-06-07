@@ -48,8 +48,11 @@ jobs:
   # the WordNet database. Built on 26.04 so it bundles the GNOME 50 toolkit
   # (GTK 4.22 / libadwaita 1.9), matching the Flatpak runtime and current
   # desktops. This raises the glibc floor, an accepted trade-off: older systems
-  # have the .deb, the Flatpak, or upstream Artha. librsvg2-common ships the
-  # SVG pixbuf loader the icon needs, so it gets bundled.
+  # have the .deb, the Flatpak, or upstream Artha. dpkg-dev provides
+  # dpkg-architecture, which linuxdeploy-plugin-gtk calls to locate the multiarch
+  # library directory and aborts without. librsvg2-common ships the SVG pixbuf
+  # loader the icon needs and libgdk-pixbuf2.0-bin the gdk-pixbuf-query-loaders
+  # tool the plugin runs to register it in the bundle.
   appimage:
     runs-on: ubuntu-latest
     container: ubuntu:26.04
@@ -59,10 +62,10 @@ jobs:
           apt-get update
           apt-get install -y --no-install-recommends \
             ca-certificates curl file git nodejs \
-            meson ninja-build gcc pkgconf gettext \
+            meson ninja-build gcc pkgconf gettext dpkg-dev \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
             wordnet-dev wordnet-base \
-            librsvg2-common
+            librsvg2-common libgdk-pixbuf2.0-bin
 
       - uses: actions/checkout@v4
 
