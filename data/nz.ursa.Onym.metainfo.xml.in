@@ -45,6 +45,15 @@ SPDX-License-Identifier: FSFAP
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.1.1" date="2026-06-08">
+      <description>
+        <p>A maintenance release.</p>
+        <ul>
+          <li>The app icon scales correctly at small sizes.</li>
+          <li>Screenshots and the description show correctly in software centres.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-06-05">
       <description>
         <p>First packaged release.</p>

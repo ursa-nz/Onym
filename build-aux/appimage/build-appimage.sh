@@ -10,7 +10,7 @@
 #
 # Usage: build-aux/appimage/build-appimage.sh
 # Env:   WN_DATA_DIR   WordNet database to bundle (default /usr/share/wordnet)
-#        ONYM_VERSION  version string for the output name (default 0.1.0)
+#        ONYM_VERSION  version string for the output name (default 0.1.1)
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -19,7 +19,7 @@ work="${root}/_appimage"
 appdir="${work}/AppDir"
 tools="${work}/tools"
 arch="$(uname -m)"
-version="${ONYM_VERSION:-0.1.0}"
+version="${ONYM_VERSION:-0.1.1}"
 
 # Nested AppImages (linuxdeploy, appimagetool) must run without FUSE in CI.
 export APPIMAGE_EXTRACT_AND_RUN=1
