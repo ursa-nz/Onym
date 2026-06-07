@@ -3,7 +3,11 @@ SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
 SPDX-License-Identifier: GPL-3.0-or-later
 -->
 
-# Onym
+<p align="center">
+  <img src="data/icons/hicolor/scalable/apps/nz.ursa.Onym.svg" width="192" alt="Onym">
+</p>
+
+<h1 align="center">Onym</h1>
 
 Onym is a thesaurus and dictionary for GNOME, built on WordNet. You type a word and Onym shows its
 meanings grouped by part of speech, with example sentences, then its synonyms, its antonyms, and the
