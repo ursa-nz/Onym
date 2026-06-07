@@ -50,11 +50,29 @@ fi
 install -d "${appdir}/usr/share/wordnet"
 cp -a "${wn_data}/." "${appdir}/usr/share/wordnet/"
 
-# 3. AppRun hook: point the WordNet engine at the bundled database. linuxdeploy's
-#    AppRun sources every script in apprun-hooks/ before launching the app.
+# 3. AppRun hooks. linuxdeploy's AppRun sources every script in apprun-hooks/
+#    before launching the app, in name order, so ours (onym-*) run after the
+#    plugin's (linuxdeploy-*) and can correct what it sets.
 install -d "${appdir}/apprun-hooks"
+
+#    a. Point the WordNet engine at the bundled database; onym-engine.c honours
+#       WNSEARCHDIR.
 cat > "${appdir}/apprun-hooks/onym-wordnet.sh" <<'HOOK'
 export WNSEARCHDIR="${APPDIR}/usr/share/wordnet"
+HOOK
+
+#    b. Undo the theming the GTK plugin forces. linuxdeploy-plugin-gtk exports
+#       GTK_THEME=Adwaita:<variant> and GDK_BACKEND=x11, both wrong for a
+#       libadwaita app. libadwaita ships its own stylesheet; a set GTK_THEME
+#       makes GTK layer its legacy/fallback theme on top of it, which is what
+#       produces the gradient header bars, beveled window buttons and missing
+#       dialog backdrop seen in 0.1.0. Clearing GTK_THEME lets libadwaita style
+#       itself and track the system light/dark and accent through the portal.
+#       GTK 4 is stable on Wayland now, so prefer it (override with
+#       ONYM_GDK_BACKEND) and keep X11 as the fallback.
+cat > "${appdir}/apprun-hooks/onym-theme.sh" <<'HOOK'
+unset GTK_THEME
+export GDK_BACKEND="${ONYM_GDK_BACKEND:-wayland,x11}"
 HOOK
 
 # 4. Fetch the build tools (cached between runs).

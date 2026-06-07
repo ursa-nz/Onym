@@ -45,20 +45,21 @@ jobs:
           path: dist/*.deb
 
   # A portable AppImage that bundles GTK4, libadwaita, the WordNet runtime and
-  # the WordNet database. Built on the older 24.04 LTS, which already meets the
-  # GTK 4.14 and libadwaita 1.5 floors, so the glibc requirement stays low and
-  # the AppImage runs on a wider range of distributions. librsvg2-common ships
-  # the SVG pixbuf loader the icon needs, so it gets bundled.
+  # the WordNet database. Built on 26.04 so it bundles the GNOME 50 toolkit
+  # (GTK 4.22 / libadwaita 1.9), matching the Flatpak runtime and current
+  # desktops. This raises the glibc floor, an accepted trade-off: older systems
+  # have the .deb, the Flatpak, or upstream Artha. librsvg2-common ships the
+  # SVG pixbuf loader the icon needs, so it gets bundled.
   appimage:
     runs-on: ubuntu-latest
-    container: ubuntu:24.04
+    container: ubuntu:26.04
     steps:
       - name: Install build dependencies
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
             ca-certificates curl file git \
-            meson ninja-build gcc pkgconf \
+            meson ninja-build gcc pkgconf gettext \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
             wordnet-dev wordnet-base \
             librsvg2-common
