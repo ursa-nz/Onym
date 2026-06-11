@@ -63,8 +63,8 @@ modules:
       # it.
       - type: git
         url: https://forge.ursa.nz/ursa-nz/Onym.git
-        tag: v0.1.0
-        commit: 2f7ddbfa3e5c58df4dcb7c13336a257f4d9683f2
+        tag: v0.2.0
+        commit: 25083184bb6d0b4be4205dbfa657492ec4f52ff3
         x-checker-data:
           type: git
           tag-pattern: '^v([\d.]+)$'
@@ -72,5 +72,5 @@ modules:
       # commit alongside engine releases.
       - type: git
         url: https://forge.ursa.nz/ursa-nz/onym-engine.git
-        commit: 362f060aa0ea0f03c374525a9698e7e39fb49ebe
+        commit: 9aa4733bad85e05e03f131ff85048fa2b5412dea
         dest: onym-engine
