@@ -188,3 +188,35 @@ onym_engine_suggest (OnymEngine *self, const char *word, guint max_results)
     return empty_strv ();
   return copy_and_free_strv (onym_core_suggest (self->core, word, max_results));
 }
+
+/**
+ * onym_engine_random_word:
+ * @self: an OnymEngine
+ *
+ * Pick a headword at random from the lemma index, for a "surprise me" action. The core is
+ * immutable once opened and takes no randomness itself, so the choice is made here: read the
+ * count, pick an index with g_random_int_range(), and fetch the headword at it.
+ *
+ * Returns: (transfer full) (nullable): a headword in display form, freed with g_free(), or %NULL
+ *   when the database is missing or holds no headwords
+ */
+char *
+onym_engine_random_word (OnymEngine *self)
+{
+  g_return_val_if_fail (ONYM_IS_ENGINE (self), NULL);
+
+  if (!ensure_core (self, NULL))
+    return NULL;
+
+  /* WordNet 3.0 indexes about 147,000 headwords, so the count sits comfortably inside the
+   * gint32 range g_random_int_range works in. */
+  size_t count = onym_core_lemma_count (self->core);
+  if (count == 0)
+    return NULL;
+
+  gint32 limit = (gint32) MIN (count, (size_t) G_MAXINT32);
+  char *lemma = onym_core_lemma_at (self->core, (size_t) g_random_int_range (0, limit));
+  char *word = g_strdup (lemma);
+  onym_core_string_free (lemma);
+  return word;
+}

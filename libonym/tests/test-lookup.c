@@ -155,6 +155,31 @@ test_complete (void)
   g_object_unref (engine);
 }
 
+static void
+test_random_word (void)
+{
+  if (!data_available ())
+    {
+      g_test_skip ("WordNet data not present");
+      return;
+    }
+
+  OnymEngine *engine = onym_engine_new ();
+  char *word = onym_engine_random_word (engine);
+
+  /* The pick is random but the contract is not: with data present the word is non-empty, and any
+   * headword the index can pick must itself look up. */
+  g_assert_nonnull (word);
+  g_assert_true (*word != '\0');
+
+  OnymResult *result = onym_engine_lookup (engine, word, NULL);
+  g_assert_nonnull (result);
+
+  g_object_unref (result);
+  g_free (word);
+  g_object_unref (engine);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -164,5 +189,6 @@ main (int argc, char **argv)
   g_test_add_func ("/onym/lookup/miss", test_lookup_miss);
   g_test_add_func ("/onym/lookup/tree", test_lookup_tree);
   g_test_add_func ("/onym/lookup/complete", test_complete);
+  g_test_add_func ("/onym/lookup/random", test_random_word);
   return g_test_run ();
 }

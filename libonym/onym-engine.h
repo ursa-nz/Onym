@@ -46,4 +46,8 @@ char **onym_engine_complete (OnymEngine *self, const char *prefix, guint max_res
  * after a missed lookup. Never NULL; the caller frees it with g_strfreev. */
 char **onym_engine_suggest (OnymEngine *self, const char *word, guint max_results);
 
+/* Pick a headword at random from the lemma index, for a "surprise me" action. Returns NULL when
+ * the database is missing or holds no headwords; otherwise the caller frees it with g_free. */
+char *onym_engine_random_word (OnymEngine *self);
+
 G_END_DECLS
