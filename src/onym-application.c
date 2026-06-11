@@ -150,6 +150,11 @@ onym_application_startup (GApplication *application)
   const char *preferences_accels[] = { "<primary>comma", NULL };
   gtk_application_set_accels_for_action (GTK_APPLICATION (self), "app.preferences",
                                          preferences_accels);
+
+  /* R for random. Onym has nothing to reload, so the shortcut is free, and it keeps the surprise
+   * me action reachable when no button for it is on screen. */
+  const char *random_accels[] = { "<primary>r", NULL };
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self), "win.random", random_accels);
 }
 
 static void

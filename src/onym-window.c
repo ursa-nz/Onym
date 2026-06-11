@@ -447,6 +447,18 @@ on_lookup_action (GSimpleAction *action, GVariant *parameter, gpointer user_data
   show_word (self, g_variant_get_string (parameter, NULL), TRUE, TRUE);
 }
 
+/* Surprise me: look up a headword picked at random from the whole index. A NULL pick means the
+ * database is missing, and the search paths already explain that better than a random miss would. */
+static void
+on_random_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+  OnymWindow *self = user_data;
+  char *word = onym_engine_random_word (self->engine);
+  if (word != NULL)
+    show_word (self, word, TRUE, TRUE);
+  g_free (word);
+}
+
 static void
 on_history_back (GSimpleAction *action, GVariant *parameter, gpointer user_data)
 {
@@ -630,6 +642,7 @@ onym_window_init (OnymWindow *self)
   setup_spacing_breakpoint (self);
 
   add_action (self, "lookup", G_VARIANT_TYPE_STRING, G_CALLBACK (on_lookup_action));
+  add_action (self, "random", NULL, G_CALLBACK (on_random_action));
   self->back_action = add_action (self, "history-back", NULL, G_CALLBACK (on_history_back));
   self->forward_action = add_action (self, "history-forward", NULL, G_CALLBACK (on_history_forward));
   update_history_actions (self);
