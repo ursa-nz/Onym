@@ -67,7 +67,7 @@ HOOK
 #       GTK_THEME=Adwaita:<variant> and GDK_BACKEND=x11, both wrong for a
 #       libadwaita app. libadwaita ships its own stylesheet; a set GTK_THEME
 #       makes GTK layer its legacy/fallback theme on top of it, which is what
-#       produces the gradient header bars, beveled window buttons and missing
+#       produces the gradient header bars, bevelled window buttons and missing
 #       dialog backdrop seen in 0.1.0. Clearing GTK_THEME lets libadwaita style
 #       itself and track the system light/dark and accent through the portal.
 #       GTK 4 is stable on Wayland now, so prefer it (override with

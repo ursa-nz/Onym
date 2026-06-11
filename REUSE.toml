@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 version = 1
 
 # Config files and data that cannot carry, or do not warrant, an inline header.

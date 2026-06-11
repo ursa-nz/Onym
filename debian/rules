@@ -8,7 +8,9 @@ export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 	dh $@ --buildsystem=meson
 
 # Static-link libonym into the application so the binary package ships just the
-# app and its data, with no public shared library or development files.
+# app and its data, with no public shared library or development files. The
+# lookup engine comes from the sibling ../onym-engine checkout, meson's
+# default; a packager building elsewhere points -Donym_engine_dir at one.
 override_dh_auto_configure:
 	dh_auto_configure -- \
 	  -Dapp=enabled \
