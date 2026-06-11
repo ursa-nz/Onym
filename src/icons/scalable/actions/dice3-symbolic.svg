@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<svg width="16" height="16" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <!-- A die showing three: the face as a rounded ring (outer and inner outlines under an even-odd
+       fill), then the pips on the diagonal. Everything is a filled path because GTK's symbolic
+       icon renderer recolours fills; a stroked outline comes out as a solid block. -->
+  <path fill="#2e3436" fill-rule="evenodd" d="M 4.2 1.6 H 11.8 A 2.6 2.6 0 0 1 14.4 4.2 V 11.8 A 2.6 2.6 0 0 1 11.8 14.4 H 4.2 A 2.6 2.6 0 0 1 1.6 11.8 V 4.2 A 2.6 2.6 0 0 1 4.2 1.6 Z M 4.2 2.8 A 1.4 1.4 0 0 0 2.8 4.2 V 11.8 A 1.4 1.4 0 0 0 4.2 13.2 H 11.8 A 1.4 1.4 0 0 0 13.2 11.8 V 4.2 A 1.4 1.4 0 0 0 11.8 2.8 Z M 3.8 5 A 1.2 1.2 0 1 0 6.2 5 A 1.2 1.2 0 1 0 3.8 5 Z M 6.8 8 A 1.2 1.2 0 1 0 9.2 8 A 1.2 1.2 0 1 0 6.8 8 Z M 9.8 11 A 1.2 1.2 0 1 0 12.2 11 A 1.2 1.2 0 1 0 9.8 11 Z"/>
+</svg>
