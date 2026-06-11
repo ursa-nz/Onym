@@ -1,3 +1,12 @@
+onym (0.2.0-1) resolute; urgency=medium
+
+  * Replace the bundled WordNet C library with the shared onym-engine
+    Rust core, built from the sibling checkout.
+  * Variant spellings no longer hide a word's other senses, and relation
+    trees no longer pick up another branch's children.
+
+ -- ursa.nz <code@ursa.nz>  Thu, 11 Jun 2026 18:41:09 +1000
+
 onym (0.1.1-1) resolute; urgency=medium
 
   * Correct the icon scaling at small sizes.
