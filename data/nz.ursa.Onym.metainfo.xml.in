@@ -45,6 +45,17 @@ SPDX-License-Identifier: FSFAP
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.3.0" date="2026-06-12">
+      <description>
+        <p>Desktop features, bringing the desktop closer to the mobile app's feel.</p>
+        <ul>
+          <li>A sidebar on wide windows lists the words that extend the current one, such as family Cathartidae for family.</li>
+          <li>A random word action: the dice button in the sidebar, or Ctrl+R.</li>
+          <li>Right-click, or the Menu key, copies a word title or chip as plain text.</li>
+          <li>The About dialog credits onym-engine, the shared lookup core.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.2.0" date="2026-06-11">
       <description>
         <p>The lookup engine is new.</p>

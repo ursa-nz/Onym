@@ -1,3 +1,14 @@
+onym (0.3.0-1) resolute; urgency=medium
+
+  * An extended-words sidebar on wide windows lists the longer headwords
+    that grow out of the current one, in the manner of Nautilus.
+  * A random word action behind the sidebar's dice button and Ctrl+R.
+  * Right-click, or the Menu key, copies a word title or chip as plain
+    text.
+  * The About dialog credits onym-engine, the shared lookup core.
+
+ -- ursa.nz <code@ursa.nz>  Fri, 12 Jun 2026 09:58:30 +1000
+
 onym (0.2.0-1) resolute; urgency=medium
 
   * Replace the bundled WordNet C library with the shared onym-engine
