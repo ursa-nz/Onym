@@ -55,9 +55,14 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   adw_about_dialog_set_copyright (about, "© 2026 ursa.nz");
   adw_about_dialog_set_website (about, "https://ursa.nz");
   adw_about_dialog_set_issue_url (about, "https://forge.ursa.nz/ursa-nz/Onym/issues");
+  /* The engine sentence matches the Android app's About screen so both apps describe onym-engine
+   * the same way. The link below it carries the credit to the engine's own repository. */
+  adw_about_dialog_add_link (about, "onym-engine", "https://forge.ursa.nz/ursa-nz/onym-engine");
   adw_about_dialog_set_comments (
     about,
-    "A thesaurus and dictionary built on WordNet, carrying forward the work of Artha.\n\n"
+    "A thesaurus and dictionary built on WordNet. The lookup engine is onym-engine, a shared "
+    "Rust core whose behaviour derives from Artha, an earlier WordNet thesaurus by Sundaram "
+    "Ramaswamy, under the GPL.\n\n"
     "Crafted on Kaurna Pangkarra, in Australia, with respect to the Kaurna people, their "
     "language, and their continuing connection to this Country.");
   adw_about_dialog_set_developers (about, developers);
