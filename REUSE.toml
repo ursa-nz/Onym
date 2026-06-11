@@ -1,26 +1,11 @@
 version = 1
 
-# The vendored WordNet engine is kept byte for byte identical to upstream, so its licensing is
-# declared here rather than by editing the files. See libonym/engine/PROVENANCE.md.
-[[annotations]]
-path = "libonym/engine/wni.*"
-precedence = "override"
-SPDX-FileCopyrightText = "2009-2014 Sundaram Ramaswamy <legends2k@yahoo.com>"
-SPDX-License-Identifier = "GPL-2.0-or-later"
-
 # Config files and data that cannot carry, or do not warrant, an inline header.
 [[annotations]]
-path = [".gitignore", ".editorconfig", ".clang-format", "COPYING", "po/**", "data/screenshots/**", "data/icons/hicolor/scalable/apps/nz.ursa.Onym.svg", "libonym/tests/golden/**"]
+path = [".gitignore", ".editorconfig", ".clang-format", "COPYING", "po/**", "data/screenshots/**", "data/icons/hicolor/scalable/apps/nz.ursa.Onym.svg"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 ursa.nz <code@ursa.nz>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
-
-# WordNet build patches, vendored from Debian's wordnet package; its debian/ tree is GPL-2+.
-[[annotations]]
-path = ["build-aux/wordnet-patches/*.patch", "build-aux/wordnet-patches/series"]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "the Debian WordNet maintainers"
-SPDX-License-Identifier = "GPL-2.0-or-later"
 
 # Debian packaging files, which keep to their own formats and carry no inline header.
 [[annotations]]

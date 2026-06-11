@@ -4,12 +4,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-/* OnymEngine is the entry point to the library. It wraps WordNet behind a small object and returns
- * the public model. It also offers prefix completion and spelling suggestions from the lemma index.
+/* OnymEngine is the entry point to the library. It wraps the shared onym-engine core behind a
+ * small object and returns the public model. It also offers prefix completion and spelling
+ * suggestions from the core's lemma index.
  *
- * The underlying WordNet library keeps global state and is not reentrant, so every call on an engine
- * must come from one thread. Lookups read a local database and return in well under a millisecond,
- * so this is rarely a constraint in practice. */
+ * The core is immutable once opened and safe for concurrent reads, but this object opens it
+ * lazily without locking, so keep calls on one engine to one thread. Lookups read a local
+ * database and return in well under a millisecond, so this is rarely a constraint in practice. */
 
 #pragma once
 

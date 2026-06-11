@@ -21,14 +21,26 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            ca-certificates git nodejs \
+            ca-certificates curl git nodejs \
             meson ninja-build gcc pkg-config \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
             gobject-introspection libgirepository1.0-dev \
-            wordnet-base wordnet-dev pipx \
+            wordnet-base pipx \
             gettext appstream desktop-file-utils
 
       - uses: actions/checkout@v4
+
+      # The lookup engine builds from the sibling onym-engine checkout, the same convention its
+      # conformance kit uses.
+      - name: Check out onym-engine
+        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
+
+      # Ubuntu 24.04's rustc predates edition 2024, so install the stable toolchain with rustup;
+      # cargo then honours the engine's rust-toolchain.toml pin.
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
 
       - name: REUSE lint
         # reuse is fetched from PyPI at run time and the current release refuses
@@ -71,6 +83,10 @@ jobs:
       options: --privileged
     steps:
       - uses: actions/checkout@v4
+
+      # The manifest stages the engine from the sibling checkout.
+      - name: Check out onym-engine
+        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
 
       # Build against the system installation, where the image has baked the GNOME 50 runtime and
       # Sdk, rather than the per-user one, which is empty and has no remote (the runner sets HOME to

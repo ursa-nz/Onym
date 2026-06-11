@@ -97,8 +97,8 @@ the engine.
 
 ## Licensing
 
-- New code is licensed GPL-3.0-or-later. The vendored engine stays GPL-2.0-or-later under its original
-  notice.
+- All code is licensed GPL-3.0-or-later. The lookup engine lives in the sibling onym-engine
+  repository, under the same licence.
 - Every file carries an SPDX header, or is covered by an entry in `REUSE.toml`. Run `reuse lint` and
   keep it passing. Continuous integration checks it.
 

@@ -7,6 +7,12 @@ option('wordnet_data_dir',
   description: 'WordNet database directory used when WNSEARCHDIR and WNHOME are unset',
 )
 
+option('onym_engine_dir',
+  type: 'string',
+  value: '',
+  description: 'Path to an onym-engine checkout; empty means the sibling ../onym-engine, and a relative path resolves against the source root',
+)
+
 option('introspection',
   type: 'feature',
   value: 'auto',

@@ -15,8 +15,9 @@ lexical relations that connect it to other words. Those related terms are clicka
 leads to the next with a click. Search is live, with completion as you type and a suggestion when a
 word is misspelt.
 
-The word data comes from WordNet, the lexical database from Princeton University. The query engine is
-derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy. Onym is a fresh GTK4 and
+The word data comes from WordNet, the lexical database from Princeton University. The lookup engine
+is [onym-engine](https://forge.ursa.nz/ursa-nz/onym-engine), a shared Rust core whose behaviour
+derives from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy. Onym is a fresh GTK4 and
 libadwaita application around that engine, built to feel at home on GNOME 50 and later.
 
 ## Status
@@ -34,11 +35,13 @@ pass. It ships an icon, a desktop entry, AppStream metainfo, and a Flatpak that 
 
 ## Building
 
-Onym uses Meson. The library needs GLib and the WordNet runtime and development files. On Debian or
-Ubuntu:
+Onym uses Meson. The library needs GLib, a Rust toolchain for the engine, the WordNet database,
+and an onym-engine checkout beside this repository (or name one with `-Donym_engine_dir`). On
+Debian or Ubuntu:
 
 ```
-sudo apt install meson wordnet-base wordnet-dev libglib2.0-dev gobject-introspection libgirepository1.0-dev
+sudo apt install meson cargo rustc wordnet-base libglib2.0-dev gobject-introspection libgirepository1.0-dev
+git clone https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
 meson setup _build
 meson compile -C _build
 meson test -C _build
@@ -63,14 +66,14 @@ flatpak run nz.ursa.Onym
 
 ## How the code is organised
 
-Onym is three layers, so the one piece of borrowed code stays sealed off and the rest stays easy to
-follow.
+Onym is three layers, so the lexical machinery stays sealed off and the rest stays easy to follow.
 
-- The **engine** is the vendored WordNet code. It is the only part that talks to the WordNet C
-  library, and it is kept exactly as it came from Artha.
+- The **engine** is the shared onym-engine Rust core, linked in as a static archive through its C
+  ABI. It owns the WordNet file parsing, the morphology, the lookup rules, and the lemma index,
+  and it is conformance-tested in its own repository.
 - The **bridge** is the only code that calls the engine. It copies what the engine returns into a
   clean model of plain objects, then frees the engine's data.
-- The **library and application** see only that model. They never know WordNet or Artha exist.
+- The **library and application** see only that model. They never know WordNet exists.
 
 `OnymEngine` is the object you ask for a lookup. It hands back an `OnymResult`, which is a list of
 sections, each holding definitions, words, or antonyms. The application renders that result and never
@@ -81,7 +84,7 @@ parses anything itself. `ARCHITECTURE.md` describes the layers and the files in 
 Onym is free software under the GPL, version 3 or later. See `COPYING`.
 
 - WordNet is provided by Princeton University under its own permissive licence. Its notice ships with
-  the bundled database. The patched build the Flatpak uses is maintained by the Debian project.
-- The query engine is derived from Artha by Sundaram Ramaswamy, under the GPL, version 2 or later.
-  See `libonym/engine/PROVENANCE.md`.
+  the bundled database, which comes from Debian's wordnet-base package with Debian's fixes.
+- The lookup engine is onym-engine, GPL-3.0-or-later, whose behaviour derives from Artha by
+  Sundaram Ramaswamy; the derivation is recorded in that repository's PROVENANCE.md.
 - Onym is built with GTK, libadwaita, and GLib from the GNOME project.

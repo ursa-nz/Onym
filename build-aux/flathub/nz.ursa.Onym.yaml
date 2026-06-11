@@ -3,13 +3,16 @@
 
 # Flathub submission manifest. Copy this file into the Flathub repository at
 # github.com/flathub/nz.ursa.Onym. It mirrors build-aux/nz.ursa.Onym.yaml, the manifest used for
-# local builds and CI, with one change: the application is built from a pinned, tagged release
-# instead of the local working tree, which is what Flathub's network-isolated builders require.
-# Keep the WordNet module here in step with the development manifest.
+# local builds and CI, with one change: the application and the engine are built from pinned
+# revisions instead of the local working trees, which is what Flathub's network-isolated builders
+# require. Keep the WordNet data module here in step with the development manifest.
 id: nz.ursa.Onym
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
+# The lookup engine is the shared onym-engine Rust core, built from source by meson via cargo.
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
 command: onym
 
 finish-args:
@@ -25,55 +28,17 @@ cleanup:
   - '*.la'
 
 modules:
-  # WordNet, bundled so the app needs nothing installed. The library is built from Debian's repacked
-  # source with its full patch series (toolchain and security fixes); the database is the prebuilt,
-  # architecture-independent wordnet-base. See build-aux/wordnet-patches/PROVENANCE.md.
-  - name: wordnet
+  # The WordNet 3.0 database, bundled so the app needs nothing installed. It is the prebuilt,
+  # architecture-independent wordnet-base package, which carries Debian's database fixes; the
+  # engine reads it in place, read-only.
+  - name: wordnet-data
     buildsystem: simple
     build-commands:
-      - autoreconf -fi
-      # WordNet's configure insists on tclConfig.sh even for a library-only build. We do not build
-      # the Tcl browser, so point it at a stub to satisfy the check; the library never uses it.
-      - mkdir -p tclstub
-      - "echo TCL_VERSION=8.6 > tclstub/tclConfig.sh"
-      - "echo TK_VERSION=8.6 > tclstub/tkConfig.sh"
-      - ./configure --prefix=/app --with-tclconfig=$PWD/tclstub --with-tkconfig=$PWD/tclstub --disable-static
-      - make -C lib
-      - make -C lib install
-      - install -d /app/include
-      - install -m644 include/*.h /app/include/
       - ar x wordnet-base.deb
       - tar -xJf data.tar.xz
       - install -d /app/share/wordnet
       - cp -a usr/share/wordnet/. /app/share/wordnet/
     sources:
-      - type: archive
-        url: https://deb.debian.org/debian/pool/main/w/wordnet/wordnet_3.0.orig.tar.gz
-        sha256: 73572005ef8eb15be48ea1010d18082b80bfbf8684b78ce64bc3abf11db1f95f
-      - type: patch
-        paths:
-          - wordnet-patches/01_tcltk8.6.patch
-          - wordnet-patches/10_wordnet_structures.patch
-          - wordnet-patches/python3.patch
-          - wordnet-patches/20_doc_Makefile.in.patch
-          - wordnet-patches/20_doc_man_wninput.patch
-          - wordnet-patches/20_include_wn.h.patch
-          - wordnet-patches/20_src_stubs_c.patch
-          - wordnet-patches/20_src_wnb.patch
-          - wordnet-patches/20_verb.social_fix.patch
-          - wordnet-patches/20_adj.all_fix.patch
-          - wordnet-patches/30_src_grind.patch
-          - wordnet-patches/40_doc_man_fix_names.patch
-          - wordnet-patches/41_doc_man_fix_names.patch
-          - wordnet-patches/50_CVE-2008-2149_buffer_overflows.patch
-          - wordnet-patches/51_overflows.patch
-          - wordnet-patches/51_overflows_memcpy.patch
-          - wordnet-patches/90_prevent_parallel_build.patch
-          - wordnet-patches/60_gcc-4.6.patch
-          - wordnet-patches/make-reproducible.patch
-          - wordnet-patches/gcc-14.patch
-          - wordnet-patches/gcc-15.patch
-          - wordnet-patches/fix-typos.patch
       - type: file
         url: https://deb.debian.org/debian/pool/main/w/wordnet/wordnet-base_3.0-41_all.deb
         sha256: e50d14b2ee444eaf36ef2a3bd38e50c623b47ba22b2301adc4a5f12736da9264
@@ -81,17 +46,21 @@ modules:
 
   - name: onym
     buildsystem: meson
-    # Run the test suite during the build so test-lookup exercises the bundled library against the
-    # bundled database, proving the bundle works before it ships.
+    # Run the test suite during the build so test-lookup exercises the engine against the bundled
+    # database, proving the bundle works before it ships.
     run-tests: true
+    build-options:
+      append-path: /usr/lib/sdk/rust-stable/bin
     config-opts:
       - -Dwordnet_data_dir=/app/share/wordnet
+      - -Donym_engine_dir=onym-engine
       - -Dapp=enabled
       - -Dintrospection=disabled
     sources:
-      # Pinned to the tagged release. Flathub's builders have no network access during the build, so
-      # the application source must come from a fixed, public revision, not the local working tree.
-      # Bump the tag and commit on each release, or let the x-checker-data bot below propose it.
+      # Pinned to the tagged release. Flathub's builders have no network access during the build,
+      # so the application source must come from a fixed, public revision, not the local working
+      # tree. Bump the tag and commit on each release, or let the x-checker-data bot below propose
+      # it.
       - type: git
         url: https://forge.ursa.nz/ursa-nz/Onym.git
         tag: v0.1.0
@@ -99,3 +68,9 @@ modules:
         x-checker-data:
           type: git
           tag-pattern: '^v([\d.]+)$'
+      # The engine, pinned the same way and staged where -Donym_engine_dir points. Bump the
+      # commit alongside engine releases.
+      - type: git
+        url: https://forge.ursa.nz/ursa-nz/onym-engine.git
+        commit: 362f060aa0ea0f03c374525a9698e7e39fb49ebe
+        dest: onym-engine

@@ -22,10 +22,14 @@ jobs:
             ca-certificates git nodejs \
             build-essential debhelper meson ninja-build pkgconf \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
-            wordnet-dev wordnet-base \
+            cargo rustc wordnet-base \
             appstream desktop-file-utils lintian
 
       - uses: actions/checkout@v4
+
+      # The lookup engine builds from the sibling onym-engine checkout.
+      - name: Check out onym-engine
+        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
 
       - name: Build the .deb
         run: dpkg-buildpackage -us -uc -b
@@ -64,10 +68,14 @@ jobs:
             ca-certificates curl file git nodejs \
             meson ninja-build gcc pkgconf gettext dpkg-dev \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
-            wordnet-dev wordnet-base \
+            cargo rustc wordnet-base \
             librsvg2-common libgdk-pixbuf2.0-bin
 
       - uses: actions/checkout@v4
+
+      # The lookup engine builds from the sibling onym-engine checkout.
+      - name: Check out onym-engine
+        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
 
       - name: Build the AppImage
         run: ./build-aux/appimage/build-appimage.sh

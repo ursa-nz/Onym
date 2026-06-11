@@ -1,20 +1,10 @@
 # SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# The vendored WordNet engine is built on its own with warnings silenced, so its third party code
-# does not clutter the build and stays untouched.
-libonym_wni = static_library('onym-wni',
-  'engine/wni.c',
-  dependencies: [glib_dep, wordnet_dep],
-  c_args: ['-w'],
-  install: false,
-)
-
 libonym_sources = files(
   'onym-result.c',
   'onym-engine.c',
   'onym-lookup.c',
-  'wn-index.c',
 )
 
 # Sources scanned for introspection: only the files that define public types.
@@ -29,16 +19,15 @@ libonym_public_headers = files(
   'onym-result.h',
 )
 
-# Exported so the unit tests can compile the pure helpers directly.
-wn_index_sources = files('wn-index.c')
-
-libonym_deps = [glib_dep, gobject_dep, gio_dep, wordnet_dep]
+libonym_deps = [glib_dep, gobject_dep, gio_dep, onym_core_dep]
 libonym_inc = include_directories('.')
 
+# The shared Rust core joins as one relocatable object, so a shared libonym absorbs it and a
+# static libonym ships it inside the archive; either way the library is self-contained.
 libonym = library('onym',
   libonym_sources,
+  objects: onym_core_o,
   dependencies: libonym_deps,
-  link_with: libonym_wni,
   include_directories: libonym_inc,
   version: meson.project_version(),
   soversion: '0',

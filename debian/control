@@ -4,14 +4,15 @@ Priority: optional
 Maintainer: ursa.nz <code@ursa.nz>
 Build-Depends:
  debhelper-compat (= 13),
- meson (>= 1.0.0),
+ meson (>= 1.1.0),
  ninja-build,
  pkgconf,
  gettext,
  libglib2.0-dev (>= 2.74),
  libgtk-4-dev (>= 4.14),
  libadwaita-1-dev (>= 1.5),
- wordnet-dev,
+ cargo,
+ rustc (>= 1.88),
  wordnet-base,
 Standards-Version: 4.7.0
 Rules-Requires-Root: no
@@ -37,4 +38,5 @@ Description: thesaurus and dictionary for GNOME built on WordNet
  suggestion when a word is misspelt.
  .
  The word data comes from WordNet, the lexical database from Princeton
- University. The query engine is derived from Artha.
+ University. The lookup engine is onym-engine, a shared Rust core whose
+ behaviour derives from Artha.

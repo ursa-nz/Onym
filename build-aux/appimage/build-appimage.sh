@@ -2,11 +2,13 @@
 # SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Build a self-contained Onym AppImage. It bundles GTK4, libadwaita, the WordNet
-# runtime library and the WordNet database, so it runs on any reasonably current
-# Linux desktop with nothing installed. The AppRun points the engine at the
-# bundled database through WNSEARCHDIR, which onym-engine.c already honours, so
-# no code change is needed to relocate the data.
+# Build a self-contained Onym AppImage. It bundles GTK4, libadwaita, and the
+# WordNet database, so it runs on any reasonably current Linux desktop with
+# nothing installed. The lookup engine is the shared onym-engine Rust core,
+# linked statically into the binary by the meson build (cargo required; the
+# checkout defaults to the sibling ../onym-engine). The AppRun points the
+# engine at the bundled database through WNSEARCHDIR, which onym-engine.c
+# already honours, so no code change is needed to relocate the data.
 #
 # Usage: build-aux/appimage/build-appimage.sh
 # Env:   WN_DATA_DIR   WordNet database to bundle (default /usr/share/wordnet)
@@ -93,8 +95,9 @@ mkdir -p "$gtk4_moduledir"
 
 # 6. Assemble. The GTK plugin bundles GTK4/libadwaita, the gdk-pixbuf loaders,
 #    the GIO modules, the icon theme and the compiled GSettings schemas;
-#    linuxdeploy bundles the binary's own libraries, the WordNet runtime among
-#    them, and writes the final AppImage.
+#    linuxdeploy bundles the binary's own libraries and writes the final
+#    AppImage. The engine is already inside the binary, so nothing of WordNet
+#    ships but the database.
 export DEPLOY_GTK_VERSION=4
 export LINUXDEPLOY_OUTPUT_VERSION="$version"
 export PATH="${tools}:${PATH}"

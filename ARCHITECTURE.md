@@ -6,34 +6,37 @@ SPDX-License-Identifier: GPL-3.0-or-later
 # Architecture
 
 Onym is built as two products in one repository: a reusable library, `libonym`, and a thin GTK4 and
-libadwaita application that consumes it. The split keeps the one piece of borrowed code sealed behind
-a stable interface, and it lets other projects reuse the library to build their own front ends.
+libadwaita application that consumes it. The split keeps the lexical machinery sealed behind a
+stable interface, and it lets other projects reuse the library to build their own front ends.
 
 ## The three layers
 
 Onym has three layers, and the boundary between each one is deliberate.
 
 - The application is the GTK4 and libadwaita interface. It links libonym and reads the public model.
-  It never refers to WordNet or Artha types.
+  It never refers to engine types.
 - libonym is the installable library, with a pkg-config file, a GIR, and installed headers.
   Its public face is the OnymEngine object, which looks words up and offers completion and
-  suggestions, and the model that a lookup returns. Inside it, the bridge in onym-lookup is
-  the only caller of the engine, and wn-index holds the lemma index that backs completion and suggestions.
-- The engine is the WordNet code vendored in engine/. It is the only caller of the WordNet C library.
+  suggestions, and the model that a lookup returns. Inside it, the bridge in onym-lookup is the
+  only code that builds model objects from engine output.
+- The engine is onym-engine, the shared Rust core developed in its own repository and linked in as
+  a static archive through its C ABI. It owns the WordNet file parsing, the morphology, the lookup
+  rules, and the lemma index, and the conformance kit there pins its behaviour byte for byte. The
+  same core drives Onymdroid, so both applications answer every query identically.
 
-Data flows up and narrows at each boundary. The engine returns WordNet structures. The bridge copies
+Data flows up and narrows at each boundary. The engine returns plain C structs. The bridge copies
 them into model objects and frees them. From there nothing knows WordNet exists.
 
-## The borrow boundary
+## The engine boundary
 
-`libonym/engine/wni.c` and `wni.h` are vendored verbatim from Artha. They are the only code that
-includes the WordNet header `wn.h`. They are built as their own static library with warnings
-silenced, and they are never edited, so the borrow stays verifiable against upstream. Their licensing
-is recorded in `REUSE.toml` and `libonym/engine/PROVENANCE.md`.
+The build expects an onym-engine checkout beside this repository (override with
+`-Donym_engine_dir`), compiles it with cargo through `build-aux/cargo-build.sh`, and links the
+resulting relocatable object into libonym; a shared libonym absorbs it and a static one ships it
+inside the archive, so the installed library is self-contained either way. The C contract is the engine's hand-written `onym-core.h`.
 
-`onym-lookup.c` is the bridge. It is the only file that includes `wni.h`. It runs one engine request,
-walks the returned `GSList`, builds an `OnymResult`, and frees the engine response before returning.
-A comment at the top of that file maps each WordNet relation to the section it becomes.
+`onym-lookup.c` is the bridge. It runs one engine lookup, walks the returned entry, builds an
+`OnymResult`, and frees the entry in one call before returning. The engine decides everything
+lexical, section order and titles included; the bridge only changes representation.
 
 ## The public model
 
@@ -52,33 +55,28 @@ installed.
 ## The engine object
 
 `OnymEngine` is the entry point. It resolves the WordNet data directory once, from `WNSEARCHDIR`,
-then `WNHOME`, then a directory chosen at build time, and points the WordNet library at it. It
-delegates a lookup to the bridge, and it lazily loads the lemma index the first time completion or a
-suggestion is asked for.
+then `WNHOME`, then a directory chosen at build time, and opens the core over it. Where the data
+lives is application policy, so the environment variables are honoured here; the core itself only
+ever sees an explicit directory, which it reads in place, read-only. Lookups, completion, and
+suggestions all delegate to the core, so the lemma index loads once inside it.
 
-The WordNet C library keeps global state and is not reentrant, so every call on an engine must come
-from one thread. Lookups read a local database and return in well under a millisecond, so in practice
-the work stays on the main thread and this is not a constraint.
-
-## Completion and suggestions
-
-`wn-index.c` reads the WordNet index files directly, so it depends on GLib alone. It loads every
-headword once, lowercased and in display form, sorted and deduplicated. Prefix completion is then a
-binary search, and a "did you mean" suggestion is a bounded edit distance scan over the same list.
-The pure helpers it is built on, edit distance and the display and query forms of a term, are
-exported so the unit tests can exercise them without any WordNet data.
+The core is immutable after open and safe for concurrent reads, but the engine object opens it
+lazily without locking, so calls on one engine stay on one thread. Lookups read a local database
+and return in well under a millisecond, so in practice the work stays on the main thread and this
+is not a constraint.
 
 ## Tests
 
-`meson test` runs four checks. `test-index` covers the pure helpers and needs no data, so it always
-runs. `test-lookup` exercises real lookups and asserts structural facts rather than exact glosses, so
-it stays robust across WordNet releases; it skips itself when the database is absent. Two more
-validate the packaging: `appstreamcli validate --strict` over the metainfo and `desktop-file-validate`
-over the desktop entry, each run when its tool is present.
+`meson test` runs three checks. `test-lookup` exercises real lookups, completion, and suggestions
+through the public API and asserts structural facts rather than exact glosses; it skips itself
+when the database is absent. The byte-exact behaviour is pinned by the onym-engine conformance
+kit, which drives `onym-cli` as its dumper. Two more checks validate the packaging:
+`appstreamcli validate --strict` over the metainfo and `desktop-file-validate` over the desktop
+entry, each run when its tool is present.
 
 ## Packaging
 
 The `data/` directory holds the GSettings schema, the icons, the desktop entry, and the AppStream
-metainfo. For distribution, the Flatpak manifest in `build-aux/` bundles WordNet so the application
-needs nothing installed: the library is built there from Debian's patched source and the database
-comes from Debian's prebuilt package, both kept distinct from the vendored Artha engine.
+metainfo. For distribution, the Flatpak manifest in `build-aux/` bundles the WordNet database from
+Debian's prebuilt wordnet-base package, so the application needs nothing installed; the engine is
+compiled into the binary, so nothing else of WordNet ships.
