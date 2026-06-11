@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+# SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""Print the Markdown body for one release, derived from its metainfo entry.
+
+The release jobs in the packages workflows call this with the bare version (no leading v),
+so the generated release pages share one format with the hand-written ones: the metainfo
+paragraph, the metainfo bullet list, and a Downloads section naming the attached packages.
+The Flatpak bundle is built locally and attached after the workflow runs, so it is listed
+here all the same. A missing metainfo entry is an error: the entry is part of cutting a
+release, and failing loudly here keeps a tag from shipping without its release notes.
+"""
+
+import sys
+import xml.etree.ElementTree as ET
+
+METAINFO = "data/nz.ursa.Onym.metainfo.xml.in"
+
+
+def text(node):
+    return " ".join("".join(node.itertext()).split())
+
+
+def main():
+    if len(sys.argv) != 2:
+        sys.exit("usage: release-notes VERSION")
+    version = sys.argv[1]
+    release = next(
+        (r for r in ET.parse(METAINFO).getroot().iter("release") if r.get("version") == version),
+        None,
+    )
+    if release is None:
+        sys.exit(f"no <release version={version!r}> in {METAINFO}; add the entry first")
+    description = release.find("description")
+    lines = []
+    paragraph = description.find("p") if description is not None else None
+    if paragraph is not None:
+        lines += [f"Onym {version}. {text(paragraph)}", ""]
+    if description is not None:
+        lines += [f"- {text(item)}" for item in description.iter("li")]
+    lines += [
+        "",
+        "### Downloads",
+        f"- **`onym_{version}-1_amd64.deb`** — Debian/Ubuntu package (needs system WordNet).",
+        f"- **`Onym-{version}-x86_64.AppImage`** — portable AppImage; bundles the toolkit and the database.",
+        "- **`onym.flatpak`** — single-file Flatpak bundle (GNOME 50 runtime).",
+    ]
+    print("\n".join(lines).strip())
+
+
+if __name__ == "__main__":
+    main()

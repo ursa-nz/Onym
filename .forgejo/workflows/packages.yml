@@ -85,3 +85,59 @@ jobs:
         with:
           name: Onym-x86_64.AppImage
           path: Onym-*.AppImage
+
+  # On a version tag, publish the .deb and the AppImage as a Forgejo release. The
+  # software.ursa.nz publisher imports release assets from this forge, so this job is what
+  # carries a tagged version into the apt repository; without it a tag ships only from
+  # GitHub and the repositories quietly fall behind. The release body comes from the
+  # version's metainfo entry via build-aux/release-notes. The Flatpak bundle is still built
+  # locally with flatpak-builder and attached by hand, because the runner has no Flatpak
+  # runtimes; the publisher picks up late-attached assets on its next pass.
+  release:
+    needs: [deb, appimage]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            ca-certificates curl git jq nodejs python3
+
+      - uses: actions/checkout@v4
+
+      - name: Download the built packages
+        uses: actions/download-artifact@v3
+        with:
+          path: dist
+
+      - name: Create the release and attach the packages
+        env:
+          API: ${{ github.server_url }}/api/v1/repos/${{ github.repository }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        # An existing release is completed, not replaced: the body is written only on
+        # creation and an asset already attached is kept, so a re-run never clobbers a
+        # hand-edited release, and a version keeps mapping to one set of bytes.
+        run: |
+          set -eu
+          if ! release=$(curl -fsS -H "Authorization: token $TOKEN" "$API/releases/tags/$TAG"); then
+            ./build-aux/release-notes "${TAG#v}" > notes.md
+            release=$(jq -n --arg tag "$TAG" --arg name "Onym ${TAG#v}" --rawfile body notes.md \
+              '{tag_name: $tag, name: $name, body: $body, draft: false, prerelease: false}' \
+              | curl -fsS -X POST -H "Authorization: token $TOKEN" \
+                  -H "Content-Type: application/json" -d @- "$API/releases")
+          fi
+          id=$(jq -r '.id' <<<"$release")
+          jq -r '.assets[].name' <<<"$release" > attached.txt
+          for file in dist/*/*; do
+            name=$(basename "$file")
+            if grep -qxF "$name" attached.txt; then
+              echo "$name is already attached; kept"
+              continue
+            fi
+            curl -fsS -X POST -H "Authorization: token $TOKEN" \
+              -F "attachment=@$file" "$API/releases/$id/assets?name=$name" >/dev/null
+            echo "$name attached"
+          done
