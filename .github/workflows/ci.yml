@@ -15,13 +15,14 @@ jobs:
     # build is exercised against the minimum supported toolchain.
     container: ubuntu:24.04
     steps:
-      # The base image is minimal and runs as root. Install Node and git, which the checkout action
-      # needs, before that step. There is no sudo because we are already root.
+      # The base image is minimal and runs as root. Install git, which the checkout action needs,
+      # before that step; GitHub mounts its own Node into the container. There is no sudo because
+      # we are already root.
       - name: Install dependencies
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            ca-certificates curl git nodejs \
+            ca-certificates curl git \
             meson ninja-build gcc pkg-config \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
             gobject-introspection libgirepository1.0-dev \
@@ -71,9 +72,9 @@ jobs:
 
   # Build the Flatpak for real with flatpak-builder, then lint the built result and export the
   # bundle. This pulls the GNOME 50 runtime and Sdk and builds the bundled WordNet from source, so
-  # it is the slow job. mirror-screenshots-url embeds the screenshots into the OSTree commit and
-  # rewrites the metainfo to our own software.ursa.nz/flatpak/media base (served by software-publish
-  # on atutahi), which clears the appstream screenshot checks in the built-result lint.
+  # it is the slow job. The built-result lint fetches the screenshots named in the metainfo, which
+  # resolve now that the repository is public. flatpak-builder is run directly rather than through
+  # the flatpak-github-actions action, which targets GitHub; the commands run unchanged on Forgejo.
   flatpak-build:
     runs-on: ubuntu-latest
     container:
@@ -88,6 +89,16 @@ jobs:
       - name: Check out onym-engine
         run: git clone --depth 1 https://github.com/ursa-nz/onym-engine ../onym-engine
 
+      # Build against the system installation, where the image has baked the GNOME 50 runtime and
+      # Sdk, rather than the per-user one, which is empty and has no remote (the runner sets HOME to
+      # a temporary directory). Add the flathub remote as a safety net so install-deps-from resolves
+      # if a dependency is missing. rofiles-fuse needs a FUSE device the runner may not grant, so
+      # disable it.
+      #
+      # We self-host (not Flathub), so the metainfo keeps its forge.ursa.nz screenshot URLs and we do
+      # not mirror them anywhere. compose-url-policy=full keeps those external URLs in the composed
+      # AppStream so GNOME Software can fetch them. The built-result lint below is informational for
+      # the same reason: its screenshot/icon checks only pass when mirrored to dl.flathub.org.
       - name: Build
         run: |
           flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
@@ -95,6 +106,7 @@ jobs:
             --compose-url-policy=full \
             --repo=repo --force-clean builddir build-aux/nz.ursa.Onym.yaml
 
+      # Lint the built tree against the appstream and Flatpak rules, the screenshots among them.
       - name: Lint the built result
         # Informational: flatpak-builder-lint enforces Flathub policy (mirror screenshots/icons
         # to dl.flathub.org), which does not apply to self-hosting.
