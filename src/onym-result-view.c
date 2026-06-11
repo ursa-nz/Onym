@@ -55,6 +55,109 @@ on_chip_clicked (GtkButton *button, OnymResultView *self)
   g_signal_emit (self, signals[WORD_ACTIVATED], 0, term);
 }
 
+/* Put the term stashed on @widget onto the clipboard as plain text. One handler serves every chip
+ * and the headword because the term travels as widget data rather than per-action state. */
+static void
+on_copy_activated (GSimpleAction *action, GVariant *parameter, gpointer user_data)
+{
+  GtkWidget *widget = GTK_WIDGET (user_data);
+  const char *term = g_object_get_data (G_OBJECT (widget), "onym-copy-term");
+  gdk_clipboard_set_text (gtk_widget_get_clipboard (widget), term);
+}
+
+/* Present the copy menu for @widget, building it on first use so the many chips a lookup creates
+ * do not each carry an idle popover. Negative coordinates mean the request came from the keyboard,
+ * so the menu points at the widget itself rather than at a click position. */
+static void
+show_copy_menu (GtkWidget *widget, double x, double y)
+{
+  GtkPopover *popover = g_object_get_data (G_OBJECT (widget), "onym-copy-menu");
+  if (popover == NULL)
+    {
+      g_autoptr (GMenu) menu = g_menu_new ();
+      g_menu_append (menu, "Copy", "onym-term.copy");
+      popover = GTK_POPOVER (gtk_popover_menu_new_from_model (G_MENU_MODEL (menu)));
+      gtk_widget_set_parent (GTK_WIDGET (popover), widget);
+      g_object_set_data (G_OBJECT (widget), "onym-copy-menu", popover);
+    }
+
+  if (x >= 0 && y >= 0)
+    {
+      GdkRectangle anchor = { (int)x, (int)y, 1, 1 };
+      gtk_popover_set_pointing_to (popover, &anchor);
+    }
+  else
+    {
+      gtk_popover_set_pointing_to (popover, NULL);
+    }
+  gtk_popover_popup (popover);
+}
+
+/* A secondary click opens the copy menu at the pointer. The sequence is claimed so the press does
+ * not also reach the chip's activation path. */
+static void
+on_copy_menu_pressed (GtkGestureClick *gesture, int n_press, double x, double y, gpointer user_data)
+{
+  GtkWidget *widget = gtk_event_controller_get_widget (GTK_EVENT_CONTROLLER (gesture));
+  gtk_gesture_set_state (GTK_GESTURE (gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+  show_copy_menu (widget, x, y);
+}
+
+/* Shift+F10 and the Menu key open the same copy menu, so keyboard users get the same path that
+ * pointer users get. */
+static gboolean
+on_copy_menu_shortcut (GtkWidget *widget, GVariant *args, gpointer user_data)
+{
+  show_copy_menu (widget, -1, -1);
+  return TRUE;
+}
+
+/* A popover parented with gtk_widget_set_parent is not unparented for us, and GTK warns if a
+ * widget is finalised with children left, so drop the menu when its owner is destroyed. Chips are
+ * recreated on every lookup, which makes this the path that keeps rebuilds leak free. */
+static void
+on_copy_menu_owner_destroy (GtkWidget *widget, gpointer user_data)
+{
+  GtkWidget *popover = g_object_get_data (G_OBJECT (widget), "onym-copy-menu");
+  if (popover != NULL)
+    {
+      gtk_widget_unparent (popover);
+      g_object_set_data (G_OBJECT (widget), "onym-copy-menu", NULL);
+    }
+}
+
+/* Give @widget a context menu with one Copy item that puts @term on the clipboard as plain text.
+ * Wires a secondary-click gesture plus the standard context-menu keys, and scopes a per-widget
+ * action group so each menu copies its own term. Shared by the chips and the headword so the
+ * wiring lives in one place. */
+static void
+attach_copy_menu (GtkWidget *widget, const char *term)
+{
+  g_object_set_data_full (G_OBJECT (widget), "onym-copy-term", g_strdup (term), g_free);
+
+  g_autoptr (GSimpleActionGroup) group = g_simple_action_group_new ();
+  g_autoptr (GSimpleAction) copy = g_simple_action_new ("copy", NULL);
+  g_signal_connect (copy, "activate", G_CALLBACK (on_copy_activated), widget);
+  g_action_map_add_action (G_ACTION_MAP (group), G_ACTION (copy));
+  gtk_widget_insert_action_group (widget, "onym-term", G_ACTION_GROUP (group));
+
+  GtkGesture *gesture = gtk_gesture_click_new ();
+  gtk_gesture_single_set_button (GTK_GESTURE_SINGLE (gesture), GDK_BUTTON_SECONDARY);
+  g_signal_connect (gesture, "pressed", G_CALLBACK (on_copy_menu_pressed), NULL);
+  gtk_widget_add_controller (widget, GTK_EVENT_CONTROLLER (gesture));
+
+  GtkShortcutTrigger *trigger
+      = gtk_alternative_trigger_new (gtk_keyval_trigger_new (GDK_KEY_F10, GDK_SHIFT_MASK),
+                                     gtk_keyval_trigger_new (GDK_KEY_Menu, 0));
+  GtkEventController *shortcuts = gtk_shortcut_controller_new ();
+  gtk_shortcut_controller_add_shortcut (
+      GTK_SHORTCUT_CONTROLLER (shortcuts),
+      gtk_shortcut_new (trigger, gtk_callback_action_new (on_copy_menu_shortcut, NULL, NULL)));
+  gtk_widget_add_controller (widget, shortcuts);
+
+  g_signal_connect (widget, "destroy", G_CALLBACK (on_copy_menu_owner_destroy), NULL);
+}
+
 /* A clickable term. @relation is what the term is to the headword, set as the chip's accessible
  * description so a screen reader reads, for example, "felicitous, synonym". */
 static GtkWidget *
@@ -65,6 +168,7 @@ make_chip (OnymResultView *self, const char *term, const char *relation)
   gtk_widget_add_css_class (button, "word-chip");
   g_object_set_data_full (G_OBJECT (button), "onym-term", g_strdup (term), g_free);
   g_signal_connect (button, "clicked", G_CALLBACK (on_chip_clicked), self);
+  attach_copy_menu (button, term);
   if (relation != NULL)
     gtk_accessible_update_property (GTK_ACCESSIBLE (button),
                                     GTK_ACCESSIBLE_PROPERTY_DESCRIPTION, relation, -1);
@@ -343,6 +447,12 @@ onym_result_view_set_result (OnymResultView *self, OnymResult *result)
   gtk_widget_set_margin_bottom (headword, 6);
   gtk_accessible_update_property (GTK_ACCESSIBLE (headword),
                                   GTK_ACCESSIBLE_PROPERTY_LEVEL, 1, -1);
+
+  /* The headword offers the same copy menu as the chips. A label is not focusable by default, so
+   * make it so; without focus the context-menu keys could never reach the title. It stays a level
+   * one heading, so the reading order a screen reader presents is unchanged. */
+  gtk_widget_set_focusable (headword, TRUE);
+  attach_copy_menu (headword, onym_result_get_term (result));
   gtk_box_append (self->box, headword);
 
   GListModel *sections = onym_result_get_sections (result);
