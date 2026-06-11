@@ -22,8 +22,13 @@ Onym uses Meson. On Debian or Ubuntu, install the dependencies:
 sudo apt install meson ninja-build gcc pkg-config \
   libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
   gobject-introspection libgirepository1.0-dev \
-  wordnet-base wordnet-dev
+  wordnet-base
 ```
+
+The lookup engine builds from a sibling checkout of
+[onym-engine](https://forge.ursa.nz/ursa-nz/onym-engine), so clone it next to this repository
+(`-Donym_engine_dir` points elsewhere) and have cargo on your PATH; a rustup install honours the
+engine's pinned toolchain.
 
 Then configure and build:
 
@@ -57,12 +62,13 @@ the library, and keep the suite green.
 
 Onym is three layers, and the boundary between them is by design.
 
-- The engine, `libonym/engine/wni.c` and `wni.h`, is vendored from Artha and is the only code that
-  talks to the WordNet C library. Do not edit it. Its licensing and origin are recorded in
-  `REUSE.toml` and `libonym/engine/PROVENANCE.md`.
-- The bridge, `libonym/onym-lookup.c`, is the only file that includes the engine header. It copies
-  the engine's output into the public model and frees the engine's data.
-- The library and the application see only the model. They never refer to WordNet or Artha types.
+- The engine is the shared onym-engine Rust core, built by cargo from the sibling checkout and
+  linked into `libonym` as one relocatable object. Its behaviour is fixed by that repository's
+  spec and conformance kit, so lexical changes happen there, never here.
+- The bridge, `libonym/onym-engine.c` and `libonym/onym-lookup.c`, is the only code that includes
+  the core's header, `onym-core.h`. It opens the core over the WordNet data directory, copies each
+  answer into the public model, and frees the core's data.
+- The library and the application see only the model. They never refer to engine types.
 
 Keep this separation. New code in the library or the application should depend on the model, not on
 the engine.
@@ -73,8 +79,8 @@ the engine.
   a definition, and a space before every parenthesis. A `.clang-format` and an `.editorconfig` are
   checked in. Run `clang-format -i` on the files you change before you commit.
 - Use GObject for types, with `G_DECLARE_FINAL_TYPE`. Avoid global state.
-- Namespace everything you write with `Onym`, `onym_`, and `ONYM_`. The vendored engine keeps its own
-  `wni_` prefix.
+- Namespace everything you write with `Onym`, `onym_`, and `ONYM_`. The shared core's C ABI keeps
+  its own `onym_core_` prefix.
 - Build the interface from `.ui` templates compiled into a GResource, not from widgets hand-built in
   C.
 - Manage memory with `g_autoptr`, `g_autofree`, `g_clear_object`, and the like. Give the model types
