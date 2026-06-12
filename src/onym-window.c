@@ -54,15 +54,15 @@ struct _OnymWindow
   guint debounce_id;
   gboolean suppress_changed; /* true while we set the entry text ourselves */
 
-  char *extensions_term; /* the term the extensions list was built for */
-  guint extension_count; /* rows in the extensions list */
+  char *sidebar_term; /* the term the sidebar's word lists were built for */
+  guint sidebar_rows; /* loadable word rows in the sidebar, headings not counted */
   gboolean window_is_wide; /* the width breakpoint state, half of the sidebar's visibility rule */
 };
 
 G_DEFINE_FINAL_TYPE (OnymWindow, onym_window, ADW_TYPE_APPLICATION_WINDOW)
 
 static void hide_completions (OnymWindow *self);
-static void update_extensions (OnymWindow *self, const char *term);
+static void update_sidebar_lists (OnymWindow *self, const char *term);
 static void update_sidebar_visibility (OnymWindow *self);
 
 OnymWindow *
@@ -155,11 +155,8 @@ display_result (OnymWindow *self, OnymResult *result)
   onym_result_view_set_tree_expansion (self->result_view,
                                        g_settings_get_enum (self->settings, "tree-expansion"));
   onym_result_view_set_result (self->result_view, result);
-  update_extensions (self, onym_result_get_term (result));
+  update_sidebar_lists (self, onym_result_get_term (result));
   gtk_stack_set_visible_child_name (self->stack, "result");
-  /* A word-to-word navigation stays on the result page, so the page-change notify does not fire
-   * and the sidebar is re-evaluated here. */
-  update_sidebar_visibility (self);
 }
 
 /* Re-render the result on screen when the tree expansion preference changes. */
@@ -175,8 +172,7 @@ on_tree_expansion_changed (GSettings *settings, const char *key, OnymWindow *sel
 }
 
 /* Keep the window title in step with what is shown, so the frame announces the current word to a
- * screen reader and labels the window in the shell. The sidebar answers to the visible page too,
- * so every page change re-evaluates it here. */
+ * screen reader and labels the window in the shell. */
 static void
 on_visible_child_changed (GtkStack *stack, GParamSpec *pspec, OnymWindow *self)
 {
@@ -185,7 +181,6 @@ on_visible_child_changed (GtkStack *stack, GParamSpec *pspec, OnymWindow *self)
     gtk_window_set_title (GTK_WINDOW (self), onym_result_get_term (self->current_result));
   else
     gtk_window_set_title (GTK_WINDOW (self), "Onym");
-  update_sidebar_visibility (self);
 }
 
 /* Build a flow of clickable suggestion chips, each wired to the win.lookup action. */
@@ -301,30 +296,130 @@ onym_window_search (OnymWindow *self, const char *word)
   show_word (self, word, TRUE, TRUE);
 }
 
-/* Extended words sidebar. */
+/* More-words sidebar. */
 
 static int
-compare_extension_terms (gconstpointer a, gconstpointer b)
+compare_sidebar_terms (gconstpointer a, gconstpointer b)
 {
   return g_strcmp0 (*(const char * const *) a, *(const char * const *) b);
 }
 
-/* Rebuild the sidebar list with the headwords that extend @term by further space-separated words,
- * for example family into family Acanthaceae. Completion is asked for the term and for the term
- * plus a trailing space, since the cap can make either query surface entries the other misses;
- * the union is filtered to true extensions, sorted, and deduplicated. */
+/* Append a subheading row naming the group that follows it. The row takes no activation and no
+ * selection, so keyboard focus skips straight between the words. */
 static void
-update_extensions (OnymWindow *self, const char *term)
+append_sidebar_heading (OnymWindow *self, const char *title)
 {
-  if (g_strcmp0 (self->extensions_term, term) == 0)
-    return;
-  g_free (self->extensions_term);
-  self->extensions_term = g_strdup (term);
+  GtkWidget *label = gtk_label_new (title);
+  gtk_label_set_xalign (GTK_LABEL (label), 0.0);
+  gtk_widget_add_css_class (label, "heading");
+  gtk_widget_set_margin_top (label, 10);
+  gtk_widget_set_margin_bottom (label, 2);
 
+  GtkWidget *row = gtk_list_box_row_new ();
+  gtk_list_box_row_set_child (GTK_LIST_BOX_ROW (row), label);
+  gtk_list_box_row_set_activatable (GTK_LIST_BOX_ROW (row), FALSE);
+  gtk_list_box_row_set_selectable (GTK_LIST_BOX_ROW (row), FALSE);
+  gtk_list_box_append (self->extensions_list, row);
+}
+
+/* Append one loadable word row to the sidebar. */
+static void
+append_sidebar_word (OnymWindow *self, const char *word)
+{
+  GtkWidget *label = gtk_label_new (word);
+  gtk_label_set_xalign (GTK_LABEL (label), 0.0);
+  gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_END);
+
+  GtkWidget *row = gtk_list_box_row_new ();
+  gtk_list_box_row_set_child (GTK_LIST_BOX_ROW (row), label);
+  g_object_set_data_full (G_OBJECT (row), "term", g_strdup (word), g_free);
+  gtk_list_box_append (self->extensions_list, row);
+  self->sidebar_rows++;
+}
+
+/* Append a sorted group of words under @title, skipping adjacent duplicates (the union of two
+ * completion queries can carry the same entry twice) and capping the group. */
+static void
+append_sidebar_group (OnymWindow *self, const char *title, GPtrArray *words)
+{
+  if (words->len == 0)
+    return;
+  g_ptr_array_sort (words, compare_sidebar_terms);
+  append_sidebar_heading (self, title);
+
+  const char *previous = NULL;
+  guint added = 0;
+  for (guint i = 0; i < words->len && added < ONYM_EXTENSION_MAX; i++)
+    {
+      const char *word = g_ptr_array_index (words, i);
+      if (g_strcmp0 (word, previous) == 0)
+        continue;
+      previous = word;
+      append_sidebar_word (self, word);
+      added++;
+    }
+}
+
+/* Mark @term's row as the current position when the sidebar lists it, so browsing a family keeps
+ * showing where in the list the reading column sits. */
+static void
+select_sidebar_row (OnymWindow *self, const char *term)
+{
+  char *folded = g_ascii_strdown (term, -1);
+  GtkListBoxRow *row = NULL;
+
+  for (int i = 0; (row = gtk_list_box_get_row_at_index (self->extensions_list, i)) != NULL; i++)
+    {
+      const char *word = g_object_get_data (G_OBJECT (row), "term");
+      if (word != NULL && g_strcmp0 (word, folded) == 0)
+        break;
+    }
+  if (row != NULL)
+    gtk_list_box_select_row (self->extensions_list, row);
+  else
+    gtk_list_box_unselect_all (self->extensions_list);
+  g_free (folded);
+}
+
+/* Empty the sidebar and forget the term its lists were built for. */
+static void
+clear_sidebar (OnymWindow *self)
+{
   GtkListBoxRow *row;
   while ((row = gtk_list_box_get_row_at_index (self->extensions_list, 0)) != NULL)
     gtk_list_box_remove (self->extensions_list, GTK_WIDGET (row));
-  self->extension_count = 0;
+  self->sidebar_rows = 0;
+  g_clear_pointer (&self->sidebar_term, g_free);
+}
+
+/* Whether @folded still belongs to the family the sidebar lists: it begins with the letters of
+ * the list's root term, the way every listed word does. */
+static gboolean
+term_in_sidebar_family (OnymWindow *self, const char *folded)
+{
+  if (self->sidebar_term == NULL)
+    return FALSE;
+  char *root = g_ascii_strdown (self->sidebar_term, -1);
+  gboolean within = g_str_has_prefix (folded, root);
+  g_free (root);
+  return within;
+}
+
+/* Rebuild the sidebar for @term: first the headwords that extend it by further space-separated
+ * words, family into family Acanthaceae, then the other completions of its letters, doc into
+ * doctor. Completion is asked for the term and for the term plus a trailing space, since the cap
+ * can make either query surface entries the other misses. A term with nothing of its own keeps
+ * the previous list while it still belongs to that list's family: the sidebar is the index of the
+ * family being browsed, and following a listed word should not tear that index down. A jump
+ * somewhere unrelated, the dice or a chip, clears the stale index instead. */
+static void
+update_sidebar_lists (OnymWindow *self, const char *term)
+{
+  if (g_strcmp0 (self->sidebar_term, term) == 0)
+    {
+      select_sidebar_row (self, term);
+      return;
+    }
 
   /* Completion returns the lowercased display form, so fold the needle the same way. */
   char *folded = g_ascii_strdown (term, -1);
@@ -332,51 +427,50 @@ update_extensions (OnymWindow *self, const char *term)
   char **on_term = onym_engine_complete (self->engine, folded, ONYM_EXTENSION_MAX);
   char **on_spaced = onym_engine_complete (self->engine, spaced, ONYM_EXTENSION_MAX);
 
-  /* The array borrows the strings; both queries stay alive until the rows have copied them. */
+  /* The arrays borrow the strings; both queries stay alive until the rows have copied them. */
   GPtrArray *extensions = g_ptr_array_new ();
+  GPtrArray *completions = g_ptr_array_new ();
   for (guint i = 0; on_term[i] != NULL; i++)
-    if (g_str_has_prefix (on_term[i], spaced))
-      g_ptr_array_add (extensions, on_term[i]);
+    {
+      if (g_str_has_prefix (on_term[i], spaced))
+        g_ptr_array_add (extensions, on_term[i]);
+      else if (g_strcmp0 (on_term[i], folded) != 0)
+        g_ptr_array_add (completions, on_term[i]);
+    }
   for (guint i = 0; on_spaced[i] != NULL; i++)
     if (g_str_has_prefix (on_spaced[i], spaced))
       g_ptr_array_add (extensions, on_spaced[i]);
-  g_ptr_array_sort (extensions, compare_extension_terms);
 
-  const char *previous = NULL;
-  for (guint i = 0; i < extensions->len && self->extension_count < ONYM_EXTENSION_MAX; i++)
+  if (extensions->len > 0 || completions->len > 0)
     {
-      const char *word = g_ptr_array_index (extensions, i);
-      if (g_strcmp0 (word, previous) == 0)
-        continue;
-      previous = word;
+      clear_sidebar (self);
+      self->sidebar_term = g_strdup (term);
 
-      GtkWidget *label = gtk_label_new (word);
-      gtk_label_set_xalign (GTK_LABEL (label), 0.0);
-      gtk_label_set_ellipsize (GTK_LABEL (label), PANGO_ELLIPSIZE_END);
-
-      GtkWidget *list_row = gtk_list_box_row_new ();
-      gtk_list_box_row_set_child (GTK_LIST_BOX_ROW (list_row), label);
-      g_object_set_data_full (G_OBJECT (list_row), "term", g_strdup (word), g_free);
-      gtk_list_box_append (self->extensions_list, list_row);
-      self->extension_count++;
+      append_sidebar_group (self, "Extended words", extensions);
+      append_sidebar_group (self, "Completions", completions);
     }
+  else if (!term_in_sidebar_family (self, folded))
+    {
+      clear_sidebar (self);
+    }
+  select_sidebar_row (self, term);
 
   g_ptr_array_unref (extensions);
+  g_ptr_array_unref (completions);
   g_strfreev (on_term);
   g_strfreev (on_spaced);
   g_free (spaced);
   g_free (folded);
 }
 
-/* Show the sidebar only when the window is wide, a result is on screen, and the current word
- * actually extends; otherwise the reading column keeps the whole width. The split view spans the
- * whole window, Nautilus style, so the welcome and not-found pages must hide it too. When hiding
- * would strand keyboard focus inside the sidebar, hand it back to the search entry first. */
+/* The sidebar is part of the window's anatomy whenever the window is wide, the way Nautilus
+ * treats its own: a word with nothing to list shows the placeholder rather than taking the pane
+ * down, so the pane never flickers and the dice button stays reachable. Narrow windows collapse
+ * it, and when collapsing would strand keyboard focus inside, the search entry takes it back. */
 static void
 update_sidebar_visibility (OnymWindow *self)
 {
-  gboolean on_result = g_strcmp0 (gtk_stack_get_visible_child_name (self->stack), "result") == 0;
-  gboolean show = self->window_is_wide && on_result && self->extension_count > 0;
+  gboolean show = self->window_is_wide;
 
   if (!show && adw_overlay_split_view_get_show_sidebar (self->split_view))
     {
@@ -676,6 +770,24 @@ restore_window_state (OnymWindow *self)
   gtk_window_set_default_size (GTK_WINDOW (self),
                                g_settings_get_int (self->settings, "window-width"),
                                g_settings_get_int (self->settings, "window-height"));
+
+  /* On a first run there is no size of the user's own to honour, so open wide enough for the
+   * sidebar when the screen has the room; the schema default stays a modest reading column for
+   * small screens. A user value, once saved, always wins. */
+  g_autoptr (GVariant) sized = g_settings_get_user_value (self->settings, "window-width");
+  if (sized == NULL)
+    {
+      GListModel *monitors = gdk_display_get_monitors (gtk_widget_get_display (GTK_WIDGET (self)));
+      g_autoptr (GdkMonitor) monitor = g_list_model_get_item (monitors, 0);
+      if (monitor != NULL)
+        {
+          GdkRectangle geometry;
+          gdk_monitor_get_geometry (monitor, &geometry);
+          if (geometry.width >= 1000)
+            gtk_window_set_default_size (GTK_WINDOW (self), 900, 640);
+        }
+    }
+
   if (g_settings_get_boolean (self->settings, "window-maximized"))
     gtk_window_maximize (GTK_WINDOW (self));
 }
@@ -744,7 +856,7 @@ onym_window_dispose (GObject *object)
   g_clear_object (&self->settings);
   g_clear_object (&self->recents_menu);
   g_clear_pointer (&self->history, g_ptr_array_unref);
-  g_clear_pointer (&self->extensions_term, g_free);
+  g_clear_pointer (&self->sidebar_term, g_free);
 
   gtk_widget_dispose_template (GTK_WIDGET (object), ONYM_TYPE_WINDOW);
 

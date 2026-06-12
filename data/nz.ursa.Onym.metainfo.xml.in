@@ -45,6 +45,17 @@ SPDX-License-Identifier: FSFAP
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.3.1" date="2026-06-12">
+      <description>
+        <p>A refinement of the new sidebar.</p>
+        <ul>
+          <li>The sidebar stays on screen whenever the window is wide, listing extended words and completions under subheadings.</li>
+          <li>Browsing within a word family keeps the list in place, with the current word marked.</li>
+          <li>First runs open wide enough for the sidebar when the screen has room.</li>
+          <li>The About dialog acknowledges Narrm alongside Kaurna Pangkarra, and links Artha's home and the engine repository.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.0" date="2026-06-12">
       <description>
         <p>Desktop features, bringing the desktop closer to the mobile app's feel.</p>

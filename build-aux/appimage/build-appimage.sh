@@ -12,7 +12,7 @@
 #
 # Usage: build-aux/appimage/build-appimage.sh
 # Env:   WN_DATA_DIR   WordNet database to bundle (default /usr/share/wordnet)
-#        ONYM_VERSION  version string for the output name (default 0.2.0)
+#        ONYM_VERSION  version string for the output name (default: the meson.build version)
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -21,7 +21,10 @@ work="${root}/_appimage"
 appdir="${work}/AppDir"
 tools="${work}/tools"
 arch="$(uname -m)"
-version="${ONYM_VERSION:-0.2.0}"
+# The version names the output file. meson.build is the source of truth, so read it from
+# there rather than carrying a default that goes stale the moment a release bumps it.
+version="${ONYM_VERSION:-$(sed -n "s/^ *version: '\(.*\)',$/\1/p" "$root/meson.build" | head -n 1)}"
+test -n "$version"
 
 # Nested AppImages (linuxdeploy, appimagetool) must run without FUSE in CI.
 export APPIMAGE_EXTRACT_AND_RUN=1

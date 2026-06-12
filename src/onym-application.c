@@ -38,7 +38,8 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
     "Debian WordNet maintainers https://tracker.debian.org/pkg/wordnet",
     NULL,
   };
-  const char *artha[] = { "Sundaram Ramaswamy", NULL };
+  const char *artha[] = { "Sundaram Ramaswamy https://artha.sourceforge.net", NULL };
+  const char *engine[] = { "onym-engine https://forge.ursa.nz/ursa-nz/onym-engine", NULL };
   const char *gnome[] = {
     "GTK https://gtk.org",
     "libadwaita https://gnome.pages.gitlab.gnome.org/libadwaita/",
@@ -63,11 +64,13 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
     "A thesaurus and dictionary built on WordNet. The lookup engine is onym-engine, a shared "
     "Rust core whose behaviour derives from Artha, an earlier WordNet thesaurus by Sundaram "
     "Ramaswamy, under the GPL.\n\n"
-    "Crafted on Kaurna Pangkarra, in Australia, with respect to the Kaurna people, their "
-    "language, and their continuing connection to this Country.");
+    "Crafted on Kaurna Pangkarra and in Narrm, on Woiwurrung and Boonwurrung Country, with "
+    "respect to the Kaurna, Wurundjeri, and Bunurong peoples, their languages, and their "
+    "continuing connection to this Country.");
   adw_about_dialog_set_developers (about, developers);
   adw_about_dialog_add_acknowledgement_section (about, "Built on WordNet", wordnet);
   adw_about_dialog_add_acknowledgement_section (about, "Engine derived from Artha", artha);
+  adw_about_dialog_add_acknowledgement_section (about, "The shared Rust core", engine);
   adw_about_dialog_add_acknowledgement_section (about, "Made with GNOME", gnome);
 
   adw_dialog_present (ADW_DIALOG (about), GTK_WIDGET (window));

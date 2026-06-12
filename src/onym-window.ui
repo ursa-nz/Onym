@@ -20,7 +20,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
               <object class="AdwHeaderBar">
                 <property name="title-widget">
                   <object class="AdwWindowTitle">
-                    <property name="title" translatable="yes">Extended words</property>
+                    <property name="title" translatable="yes">More words</property>
                   </object>
                 </property>
                 <child type="end">
@@ -41,13 +41,27 @@ SPDX-License-Identifier: GPL-3.0-or-later
                 <property name="vexpand">true</property>
                 <property name="child">
                   <object class="GtkListBox" id="extensions_list">
-                    <property name="selection-mode">none</property>
+                    <property name="selection-mode">single</property>
                     <style>
                       <class name="navigation-sidebar"/>
                     </style>
                     <accessibility>
-                      <property name="label" translatable="yes">Extended words</property>
+                      <property name="label" translatable="yes">More words</property>
                     </accessibility>
+                    <child type="placeholder">
+                      <object class="GtkLabel">
+                        <property name="label" translatable="yes">Words that extend the current one appear here.</property>
+                        <property name="wrap">true</property>
+                        <property name="justify">center</property>
+                        <property name="valign">start</property>
+                        <property name="margin-top">24</property>
+                        <property name="margin-start">12</property>
+                        <property name="margin-end">12</property>
+                        <style>
+                          <class name="dim-label"/>
+                        </style>
+                      </object>
+                    </child>
                   </object>
                 </property>
               </object>

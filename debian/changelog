@@ -1,3 +1,15 @@
+onym (0.3.1-1) resolute; urgency=medium
+
+  * The sidebar stays on screen whenever the window is wide, listing
+    extended words and completions under subheadings, and keeps the
+    family list in place while browsing within it.
+  * First runs open wide enough for the sidebar when the screen has
+    room.
+  * The About dialog acknowledges Narrm alongside Kaurna Pangkarra,
+    and links Artha's home and the engine repository.
+
+ -- ursa.nz <code@ursa.nz>  Fri, 12 Jun 2026 10:49:52 +1000
+
 onym (0.3.0-1) resolute; urgency=medium
 
   * An extended-words sidebar on wide windows lists the longer headwords
