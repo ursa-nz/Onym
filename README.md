@@ -13,7 +13,9 @@ Onym is a thesaurus and dictionary for GNOME, built on WordNet. You type a word 
 meanings grouped by part of speech, with example sentences, then its synonyms, its antonyms, and the
 lexical relations that connect it to other words. Those related terms are clickable, so one lookup
 leads to the next with a click. Search is live, with completion as you type and a suggestion when a
-word is misspelt.
+word is misspelt. On wide windows a sidebar lists more words: the headwords that extend the current
+one and the other completions of its letters, each a click away. A dice button (or Ctrl+R) jumps to
+a random word, and a right click (or the Menu key) copies any word title or chip as plain text.
 
 The word data comes from WordNet, the lexical database from Princeton University. The lookup engine
 is [onym-engine](https://forge.ursa.nz/ursa-nz/onym-engine), a shared Rust core whose behaviour
