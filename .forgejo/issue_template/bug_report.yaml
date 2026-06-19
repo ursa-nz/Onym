@@ -1,0 +1,94 @@
+# SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
+# SPDX-License-Identifier: GPL-3.0-or-later
+name: Bug report
+about: Report something in Onym that does not work as it should
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Please fill in what you can so the issue can be reproduced.
+  - type: input
+    id: version
+    attributes:
+      label: Onym version
+      description: Shown in the About dialog, or run `flatpak info nz.ursa.Onym` for the Flatpak.
+      placeholder: e.g. 0.3.1
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install Onym?
+      options:
+        - Flatpak
+        - Debian or Ubuntu package (.deb)
+        - AppImage
+        - Built from source (Meson)
+        - Other (note below)
+    validations:
+      required: true
+  - type: input
+    id: distro
+    attributes:
+      label: Distribution and version
+      placeholder: e.g. Fedora 42, Ubuntu 24.04, Debian 13
+    validations:
+      required: true
+  - type: dropdown
+    id: arch
+    attributes:
+      label: Architecture
+      options:
+        - x86_64 (amd64)
+        - aarch64 (arm64)
+        - Other (note below)
+    validations:
+      required: true
+  - type: input
+    id: desktop
+    attributes:
+      label: Desktop environment and version
+      description: Onym targets GNOME 50 and later, but it runs elsewhere too.
+      placeholder: e.g. GNOME 48, KDE Plasma 6.3
+    validations:
+      required: false
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you did, in order. Include the word you looked up if it matters.
+      placeholder: |
+        1. Open Onym
+        2. Search for "serendipity"
+        3. Click the first synonym
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Terminal output or logs
+      description: Run `flatpak run nz.ursa.Onym` or `onym` from a terminal and paste anything printed. This will be formatted as a code block automatically.
+      render: shell
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and this is not a duplicate.
+          required: true
