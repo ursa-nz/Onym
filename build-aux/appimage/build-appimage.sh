@@ -3,16 +3,15 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 # Build a self-contained Onym AppImage. It bundles GTK4, libadwaita, and the
-# WordNet database, so it runs on any reasonably current Linux desktop with
-# nothing installed. The lookup engine is the shared onym-engine Rust core,
-# linked statically into the binary by the meson build (cargo required; the
-# checkout defaults to the sibling ../onym-engine). The AppRun points the
-# engine at the bundled database through WNSEARCHDIR, which onym-engine.c
-# already honours, so no code change is needed to relocate the data.
+# pinned WordNet data from the onym-data submodule, so it runs on any reasonably
+# current Linux desktop with nothing installed. The lookup engine is the shared
+# Rust core, linked statically into the binary by the meson build (cargo
+# required; the checkout defaults to the sibling ../core). The AppRun points the
+# engine at the bundled data through WNSEARCHDIR, which onym-engine.c honours, so
+# no code change is needed to relocate the data.
 #
 # Usage: build-aux/appimage/build-appimage.sh
-# Env:   WN_DATA_DIR   WordNet database to bundle (default /usr/share/wordnet)
-#        ONYM_VERSION  version string for the output name (default: the meson.build version)
+# Env:   ONYM_VERSION  version string for the output name (default: the meson.build version)
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
@@ -36,9 +35,7 @@ mkdir -p "$appdir" "$tools"
 #    the tree to the binary plus its data.
 meson setup "${work}/build" "$root" \
   --prefix=/usr --buildtype=release \
-  -Dapp=enabled -Dintrospection=disabled -Ddefault_library=static \
-  -Dwordnet_data_dir=/usr/share/wordnet \
-  -Dbundle_wordnet_overlay=true
+  -Dapp=enabled -Dintrospection=disabled -Ddefault_library=static
 meson compile -C "${work}/build"
 DESTDIR="$appdir" meson install -C "${work}/build"
 
@@ -47,14 +44,10 @@ DESTDIR="$appdir" meson install -C "${work}/build"
 rm -rf "${appdir}/usr/include" "${appdir}/usr/lib/"*/pkgconfig
 find "${appdir}/usr/lib" -name 'libonym.a' -delete 2>/dev/null || true
 
-# 2. Bundle the WordNet database.
-wn_data="${WN_DATA_DIR:-/usr/share/wordnet}"
-if [ ! -f "${wn_data}/index.noun" ]; then
-  echo "WordNet data not found in ${wn_data}; set WN_DATA_DIR" >&2
-  exit 1
-fi
+# 2. Bundle the pinned WordNet data from the onym-data submodule, base graph and
+#    etymology overlay together, with no network.
 install -d "${appdir}/usr/share/wordnet"
-cp -a "${wn_data}/." "${appdir}/usr/share/wordnet/"
+"${root}/onym-data/prepare.sh" "${appdir}/usr/share/wordnet"
 
 # 3. AppRun hooks. linuxdeploy's AppRun sources every script in apprun-hooks/
 #    before launching the app, in name order, so ours (onym-*) run after the

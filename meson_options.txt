@@ -3,14 +3,14 @@
 
 option('wordnet_data_dir',
   type: 'string',
-  value: '/usr/share/wordnet',
-  description: 'WordNet database directory used when WNSEARCHDIR and WNHOME are unset',
+  value: '',
+  description: 'WordNet data directory used when WNSEARCHDIR and WNHOME are unset; empty prepares the pinned data from the onym-data submodule into the build tree',
 )
 
 option('onym_engine_dir',
   type: 'string',
   value: '',
-  description: 'Path to an onym-engine checkout; empty means the sibling ../onym-engine, and a relative path resolves against the source root',
+  description: 'Path to an onym-engine checkout; empty means the sibling ../core, and a relative path resolves against the source root',
 )
 
 option('introspection',
@@ -23,10 +23,4 @@ option('app',
   type: 'feature',
   value: 'auto',
   description: 'Build the GTK4 and libadwaita application',
-)
-
-option('bundle_wordnet_overlay',
-  type: 'boolean',
-  value: false,
-  description: 'Install the etymology overlay (data/etym.onym) into the WordNet data directory. For self-contained packages that bundle their own WordNet (Flatpak, AppImage); off for the system .deb, which uses the shared wordnet-base directory it does not own',
 )

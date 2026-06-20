@@ -15,9 +15,11 @@
 static gboolean
 data_available (void)
 {
+  /* The test is run with WNSEARCHDIR pointing at the prepared data; with none set there is nothing
+   * to test against, so the test skips rather than reaching for a host install. */
   const char *dir = g_getenv ("WNSEARCHDIR");
   if (dir == NULL || *dir == '\0')
-    dir = "/usr/share/wordnet";
+    return FALSE;
 
   char *probe = g_build_filename (dir, "index.noun", NULL);
   gboolean ok = g_file_test (probe, G_FILE_TEST_EXISTS);

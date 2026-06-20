@@ -14,8 +14,11 @@
 
 #include <onym-core.h>
 
+/* The build sets this to the WordNet data directory: the prepared onym-data submodule for a local
+ * build, or the bundled path for a package. There is no system fallback; the engine reads the data
+ * the project ships, never whatever WordNet a host happens to have. */
 #ifndef ONYM_WN_DEFAULT_DIR
-#define ONYM_WN_DEFAULT_DIR "/usr/share/wordnet"
+#error "ONYM_WN_DEFAULT_DIR must be set by the build (meson resolves it from the onym-data submodule)"
 #endif
 
 struct _OnymEngine

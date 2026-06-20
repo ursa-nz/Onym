@@ -22,26 +22,24 @@ cleanup:
   - '*.la'
 
 modules:
-  # The WordNet 3.0 database, bundled so the app needs nothing installed. It is the prebuilt,
-  # architecture-independent wordnet-base package, which carries Debian's database fixes; the
-  # engine reads it in place, read-only.
+  # The pinned WordNet data from the onym-data submodule, the base graph and the etymology overlay
+  # together, bundled so the app needs nothing installed and the builder fetches nothing at build
+  # time. prepare.sh decompresses the vendored blob in place, with no network.
   - name: wordnet-data
     buildsystem: simple
     build-commands:
-      - ar x wordnet-base.deb
-      - tar -xJf data.tar.xz
-      - install -d /app/share/wordnet
-      - cp -a usr/share/wordnet/. /app/share/wordnet/
+      - ./prepare.sh /app/share/wordnet
     sources:
-      - type: file
-        url: https://deb.debian.org/debian/pool/main/w/wordnet/wordnet-base_3.0-41_all.deb
-        sha256: e50d14b2ee444eaf36ef2a3bd38e50c623b47ba22b2301adc4a5f12736da9264
-        dest-filename: wordnet-base.deb
+      - type: dir
+        path: ../onym-data
+        skip:
+          - .git
+          - build
 
   - name: onym
     buildsystem: meson
     # Run the test suite during the build so test-lookup exercises the engine against the bundled
-    # database, proving the bundle works before it ships.
+    # data, proving the bundle works before it ships.
     run-tests: true
     build-options:
       append-path: /usr/lib/sdk/rust-stable/bin
@@ -50,8 +48,6 @@ modules:
       - -Donym_engine_dir=onym-engine
       - -Dapp=enabled
       - -Dintrospection=disabled
-      # Install the etymology overlay alongside the bundled WordNet database.
-      - -Dbundle_wordnet_overlay=true
     sources:
       - type: dir
         path: ..
@@ -59,10 +55,12 @@ modules:
           - _build
           - .git
           - .flatpak-builder
+          # The data is bundled by the wordnet-data module above, not as app source.
+          - onym-data
       # The engine checkout, staged into the build tree where -Donym_engine_dir points. The
       # sibling-directory convention matches the conformance kit's.
       - type: dir
-        path: ../../onym-engine
+        path: ../../core
         dest: onym-engine
         skip:
           - target

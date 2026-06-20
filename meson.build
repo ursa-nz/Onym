@@ -12,20 +12,26 @@ project('onym', 'c',
   ],
 )
 
-# The WordNet database directory used when WNSEARCHDIR and WNHOME are unset.
+fs = import('fs')
+
+# The WordNet data directory used when WNSEARCHDIR and WNHOME are unset. Empty, the default, means
+# materialise the pinned data from the onym-data submodule into the build tree, base graph and the
+# etymology overlay together. Packagers pass an absolute path they populate themselves, which the
+# Flatpak and AppImage recipes do from the same submodule.
 wn_default_dir = get_option('wordnet_data_dir')
+if wn_default_dir == ''
+  onym_data_dir = meson.project_source_root() / 'onym-data'
+  if not fs.is_dir(onym_data_dir)
+    error('onym-data submodule not checked out at "@0@". Run: git submodule update --init.'.format(onym_data_dir))
+  endif
+  wn_default_dir = meson.project_build_root() / 'wordnet'
+  # prepare.sh decompresses the vendored base and overlay into the build tree, with no network.
+  run_command(onym_data_dir / 'prepare.sh', wn_default_dir, check: true)
+endif
 add_project_arguments(
   '-DONYM_WN_DEFAULT_DIR="@0@"'.format(wn_default_dir),
   language: 'c',
 )
-
-# The optional etymology overlay, built from Wiktionary by onym-engine's tools/etym-build and read
-# by the engine when present (onym-engine spec/engine.md section 6.10). It lives beside the WordNet
-# files, so self-contained packages that bundle their own WordNet install it into that directory;
-# the system .deb leaves it off, since it uses the shared wordnet-base directory it does not own.
-if get_option('bundle_wordnet_overlay')
-  install_data('data/etym.onym', install_dir: wn_default_dir)
-endif
 
 glib_dep = dependency('glib-2.0', version: '>= 2.74')
 gobject_dep = dependency('gobject-2.0')
@@ -42,7 +48,6 @@ add_project_arguments(
 # relocatable object through its C ABI. The checkout is the sibling directory by default, the same
 # convention its conformance kit uses; packagers point -Donym_engine_dir at a vendored copy
 # instead.
-fs = import('fs')
 onym_engine_dir = get_option('onym_engine_dir')
 if onym_engine_dir == ''
   onym_engine_dir = fs.parent(meson.project_source_root()) / 'core'
