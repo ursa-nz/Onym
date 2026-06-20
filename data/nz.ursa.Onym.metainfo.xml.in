@@ -14,7 +14,8 @@ SPDX-License-Identifier: FSFAP
   <description>
     <p>Onym is a thesaurus for GNOME. Look a word up and Onym shows its synonyms and antonyms, then the lexical relations that connect it to other words: what it is a kind of, its kinds, and the wholes and parts it belongs to, each shown as a tree you can open.</p>
     <p>The synonyms, antonyms and the terms in the relation trees are clickable, so one lookup leads to the next with a click. Each entry also carries its meanings, grouped by part of speech and shown with example sentences, so the senses stay in view while you explore. Search is live, with completion as you type and a suggestion when a word is misspelt.</p>
-    <p>The word data comes from WordNet, the lexical database from Princeton University. The query engine is derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy.</p>
+    <p>Where a word's origin is known, Onym shows its etymology, drawn from Wiktionary.</p>
+    <p>The word data comes from WordNet, the lexical database from Princeton University. Etymology comes from Wiktionary, under the CC-BY-SA-3.0 licence. The query engine is derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy.</p>
   </description>
 
   <launchable type="desktop-id">nz.ursa.Onym.desktop</launchable>
@@ -45,6 +46,16 @@ SPDX-License-Identifier: FSFAP
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.4.0" date="2026-06-20">
+      <description>
+        <p>Word origins.</p>
+        <ul>
+          <li>Entries now show an etymology, where one is known, drawn from Wiktionary under the CC-BY-SA-3.0 licence.</li>
+          <li>Definition and etymology text can be selected and copied.</li>
+          <li>The About dialog credits Wiktionary and the wiktextract dataset.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.3.1" date="2026-06-12">
       <description>
         <p>A refinement of the new sidebar.</p>

@@ -39,6 +39,11 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
     NULL,
   };
   const char *artha[] = { "Sundaram Ramaswamy https://artha.sourceforge.net", NULL };
+  const char *wiktionary[] = {
+    "Wiktionary contributors https://en.wiktionary.org",
+    "wiktextract by Tatu Ylonen https://kaikki.org",
+    NULL,
+  };
   const char *engine[] = { "onym-engine https://forge.ursa.nz/ursa-nz/onym-engine", NULL };
   const char *gnome[] = {
     "GTK https://gtk.org",
@@ -61,14 +66,15 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   adw_about_dialog_add_link (about, "onym-engine", "https://forge.ursa.nz/ursa-nz/onym-engine");
   adw_about_dialog_set_comments (
     about,
-    "A thesaurus and dictionary built on WordNet. The lookup engine is onym-engine, a shared "
-    "Rust core whose behaviour derives from Artha, an earlier WordNet thesaurus by Sundaram "
-    "Ramaswamy, under the GPL.\n\n"
+    "A thesaurus and dictionary built on WordNet, with word origins from Wiktionary. The lookup "
+    "engine is onym-engine, a shared Rust core whose behaviour derives from Artha, an earlier "
+    "WordNet thesaurus by Sundaram Ramaswamy, under the GPL.\n\n"
     "Crafted on Kaurna Pangkarra and in Narrm, on Woiwurrung and Boonwurrung Country, with "
     "respect to the Kaurna, Wurundjeri, and Bunurong peoples, their languages, and their "
     "continuing connection to this Country.");
   adw_about_dialog_set_developers (about, developers);
   adw_about_dialog_add_acknowledgement_section (about, "Built on WordNet", wordnet);
+  adw_about_dialog_add_acknowledgement_section (about, "Etymology from Wiktionary", wiktionary);
   adw_about_dialog_add_acknowledgement_section (about, "Engine derived from Artha", artha);
   adw_about_dialog_add_acknowledgement_section (about, "The shared Rust core", engine);
   adw_about_dialog_add_acknowledgement_section (about, "Made with GNOME", gnome);
