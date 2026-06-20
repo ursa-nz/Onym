@@ -15,7 +15,8 @@ G_DEFINE_ENUM_TYPE (OnymSectionKind, onym_section_kind,
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_DEFINITIONS, "definitions"),
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_WORDS, "words"),
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_ANTONYMS, "antonyms"),
-                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_TREE, "tree"))
+                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_TREE, "tree"),
+                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_ETYMOLOGY, "etymology"))
 
 /* OnymWord */
 
@@ -380,6 +381,7 @@ onym_section_item_type (OnymSectionKind kind)
     case ONYM_SECTION_DEFINITIONS:
       return ONYM_TYPE_DEFINITION;
     case ONYM_SECTION_WORDS:
+    case ONYM_SECTION_ETYMOLOGY:
       return ONYM_TYPE_WORD;
     case ONYM_SECTION_ANTONYMS:
       return ONYM_TYPE_ANTONYM;

@@ -23,6 +23,7 @@ typedef enum
   ONYM_SECTION_WORDS,       /* items are OnymWord */
   ONYM_SECTION_ANTONYMS,    /* items are OnymAntonym */
   ONYM_SECTION_TREE,        /* items are OnymTreeNode */
+  ONYM_SECTION_ETYMOLOGY,   /* items are OnymWord, each a prose paragraph, not a navigable term */
 } OnymSectionKind;
 
 GType onym_section_kind_get_type (void);

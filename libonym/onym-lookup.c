@@ -38,10 +38,12 @@ add_definitions (OnymResult *out, const OnymCoreSection *section)
   onym_result_add_section (out, built);
 }
 
+/* Both the flat Words sections and the Etymology section arrive as a string array in the engine's
+ * words slot; the kind is all that differs, and it tells the view to render chips or prose. */
 static void
-add_words (OnymResult *out, const OnymCoreSection *section)
+add_word_section (OnymResult *out, const OnymCoreSection *section, OnymSectionKind kind)
 {
-  OnymSection *built = onym_section_new (ONYM_SECTION_WORDS, section->title);
+  OnymSection *built = onym_section_new (kind, section->title);
   for (size_t i = 0; i < section->n_items; i++)
     onym_section_add (built, onym_word_new (section->words[i]));
   onym_result_add_section (out, built);
@@ -102,13 +104,16 @@ onym_bridge_lookup (const OnymCoreEngine *core, const char *query)
           add_definitions (out, section);
           break;
         case ONYM_CORE_SECTION_WORDS:
-          add_words (out, section);
+          add_word_section (out, section, ONYM_SECTION_WORDS);
           break;
         case ONYM_CORE_SECTION_ANTONYMS:
           add_antonyms (out, section);
           break;
         case ONYM_CORE_SECTION_TREE:
           add_tree (out, section);
+          break;
+        case ONYM_CORE_SECTION_ETYMOLOGY:
+          add_word_section (out, section, ONYM_SECTION_ETYMOLOGY);
           break;
         default:
           break;

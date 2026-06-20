@@ -260,6 +260,7 @@ make_definitions (GListModel *items)
       GtkWidget *gloss = gtk_label_new (NULL);
       gtk_label_set_wrap (GTK_LABEL (gloss), TRUE);
       gtk_label_set_xalign (GTK_LABEL (gloss), 0.0);
+      gtk_label_set_selectable (GTK_LABEL (gloss), TRUE);
 
       const char *pos = onym_definition_get_pos (def);
       char *gloss_esc = g_markup_escape_text (onym_definition_get_gloss (def), -1);
@@ -285,6 +286,7 @@ make_definitions (GListModel *items)
           GtkWidget *example = gtk_label_new (NULL);
           gtk_label_set_wrap (GTK_LABEL (example), TRUE);
           gtk_label_set_xalign (GTK_LABEL (example), 0.0);
+          gtk_label_set_selectable (GTK_LABEL (example), TRUE);
           gtk_widget_set_margin_start (example, 18);
           gtk_widget_add_css_class (example, "dim-label");
 
@@ -298,6 +300,53 @@ make_definitions (GListModel *items)
 
       gtk_box_append (box, GTK_WIDGET (row));
       g_object_unref (def);
+    }
+  return GTK_WIDGET (box);
+}
+
+/* Etymology paragraphs: plain, wrapped, selectable prose rather than chips, because the text is a
+ * sentence to read and copy, not a term to navigate to. Each OnymWord item holds one paragraph. A
+ * lone etymology reads as one paragraph; when a word has several distinct origins, each gets a
+ * bullet so they group as a list instead of floating as disconnected sentences. */
+static GtkWidget *
+make_prose (GListModel *items)
+{
+  GtkBox *box = GTK_BOX (g_object_new (GTK_TYPE_BOX,
+                                       "orientation", GTK_ORIENTATION_VERTICAL,
+                                       "spacing", 8,
+                                       "accessible-role", GTK_ACCESSIBLE_ROLE_LIST,
+                                       NULL));
+  guint n = g_list_model_get_n_items (items);
+  for (guint i = 0; i < n; i++)
+    {
+      OnymWord *paragraph = g_list_model_get_item (items, i);
+      GtkWidget *label = g_object_new (GTK_TYPE_LABEL,
+                                       "label", onym_word_get_term (paragraph),
+                                       "wrap", TRUE,
+                                       "xalign", 0.0,
+                                       "hexpand", TRUE,
+                                       "selectable", TRUE,
+                                       "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM,
+                                       NULL);
+      if (n == 1)
+        {
+          gtk_box_append (box, label);
+        }
+      else
+        {
+          GtkWidget *row = g_object_new (GTK_TYPE_BOX,
+                                         "orientation", GTK_ORIENTATION_HORIZONTAL,
+                                         "spacing", 8,
+                                         "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM,
+                                         NULL);
+          GtkWidget *bullet = gtk_label_new ("•");
+          gtk_widget_set_valign (bullet, GTK_ALIGN_START);
+          gtk_widget_add_css_class (bullet, "dim-label");
+          gtk_box_append (GTK_BOX (row), bullet);
+          gtk_box_append (GTK_BOX (row), label);
+          gtk_box_append (box, row);
+        }
+      g_object_unref (paragraph);
     }
   return GTK_WIDGET (box);
 }
@@ -473,6 +522,9 @@ onym_result_view_set_result (OnymResultView *self, OnymResult *result)
           break;
         case ONYM_SECTION_TREE:
           gtk_box_append (self->box, make_tree (self, section));
+          break;
+        case ONYM_SECTION_ETYMOLOGY:
+          gtk_box_append (self->box, make_prose (onym_section_get_items (section)));
           break;
         default:
           break;

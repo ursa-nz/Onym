@@ -126,6 +126,7 @@ render_result (OnymResult *result)
           print_definitions (items);
           break;
         case ONYM_SECTION_WORDS:
+        case ONYM_SECTION_ETYMOLOGY:
           print_words (items);
           break;
         case ONYM_SECTION_ANTONYMS:
