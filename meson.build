@@ -45,7 +45,7 @@ add_project_arguments(
 fs = import('fs')
 onym_engine_dir = get_option('onym_engine_dir')
 if onym_engine_dir == ''
-  onym_engine_dir = fs.parent(meson.project_source_root()) / 'onym-engine'
+  onym_engine_dir = fs.parent(meson.project_source_root()) / 'core'
 elif not fs.is_absolute(onym_engine_dir)
   onym_engine_dir = meson.project_source_root() / onym_engine_dir
 endif
