@@ -24,3 +24,9 @@ option('app',
   value: 'auto',
   description: 'Build the GTK4 and libadwaita application',
 )
+
+option('bundle_wordnet_overlay',
+  type: 'boolean',
+  value: false,
+  description: 'Install the etymology overlay (data/etym.onym) into the WordNet data directory. For self-contained packages that bundle their own WordNet (Flatpak, AppImage); off for the system .deb, which uses the shared wordnet-base directory it does not own',
+)

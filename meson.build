@@ -19,6 +19,14 @@ add_project_arguments(
   language: 'c',
 )
 
+# The optional etymology overlay, built from Wiktionary by onym-engine's tools/etym-build and read
+# by the engine when present (onym-engine spec/engine.md section 6.10). It lives beside the WordNet
+# files, so self-contained packages that bundle their own WordNet install it into that directory;
+# the system .deb leaves it off, since it uses the shared wordnet-base directory it does not own.
+if get_option('bundle_wordnet_overlay')
+  install_data('data/etym.onym', install_dir: wn_default_dir)
+endif
+
 glib_dep = dependency('glib-2.0', version: '>= 2.74')
 gobject_dep = dependency('gobject-2.0')
 gio_dep = dependency('gio-2.0')

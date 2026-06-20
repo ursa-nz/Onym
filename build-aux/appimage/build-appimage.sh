@@ -37,7 +37,8 @@ mkdir -p "$appdir" "$tools"
 meson setup "${work}/build" "$root" \
   --prefix=/usr --buildtype=release \
   -Dapp=enabled -Dintrospection=disabled -Ddefault_library=static \
-  -Dwordnet_data_dir=/usr/share/wordnet
+  -Dwordnet_data_dir=/usr/share/wordnet \
+  -Dbundle_wordnet_overlay=true
 meson compile -C "${work}/build"
 DESTDIR="$appdir" meson install -C "${work}/build"
 

@@ -50,6 +50,8 @@ modules:
       - -Donym_engine_dir=onym-engine
       - -Dapp=enabled
       - -Dintrospection=disabled
+      # Install the etymology overlay alongside the bundled WordNet database.
+      - -Dbundle_wordnet_overlay=true
     sources:
       - type: dir
         path: ..

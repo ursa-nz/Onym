@@ -56,6 +56,8 @@ modules:
       - -Donym_engine_dir=onym-engine
       - -Dapp=enabled
       - -Dintrospection=disabled
+      # Install the etymology overlay alongside the bundled WordNet database.
+      - -Dbundle_wordnet_overlay=true
     sources:
       # Pinned to the tagged release. Flathub's builders have no network access during the build,
       # so the application source must come from a fixed, public revision, not the local working
