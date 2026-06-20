@@ -37,13 +37,15 @@ pass. It ships an icon, a desktop entry, AppStream metainfo, and a Flatpak that 
 
 ## Building
 
-Onym uses Meson. The library needs GLib, a Rust toolchain for the engine, the WordNet database,
-and an onym-engine checkout beside this repository (or name one with `-Donym_engine_dir`). On
-Debian or Ubuntu:
+Onym uses Meson. The library needs GLib, a Rust toolchain for the engine, zstd for the data
+preparation, and a `core` engine checkout beside this repository (or name one with
+`-Donym_engine_dir`). The WordNet data comes from the `onym-data` submodule, which meson prepares
+into the build tree, so no system WordNet is needed. On Debian or Ubuntu:
 
 ```
-sudo apt install meson cargo rustc wordnet-base libglib2.0-dev gobject-introspection libgirepository1.0-dev
-git clone https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
+sudo apt install meson cargo rustc zstd libglib2.0-dev gobject-introspection libgirepository1.0-dev
+git clone https://forge.ursa.nz/ursa-nz/onym-engine.git ../core
+git submodule update --init
 meson setup _build
 meson compile -C _build
 meson test -C _build
@@ -59,7 +61,8 @@ Try it:
 ## Flatpak
 
 A Flatpak manifest is at `build-aux/nz.ursa.Onym.yaml`, building against `org.gnome.Platform`. It
-bundles WordNet, so the Flatpak needs nothing else installed:
+bundles the WordNet data from the `onym-data` submodule, so the Flatpak needs nothing else installed
+and the builder fetches no database:
 
 ```
 flatpak-builder --user --install --force-clean _flatpak build-aux/nz.ursa.Onym.yaml
@@ -86,7 +89,8 @@ parses anything itself. `ARCHITECTURE.md` describes the layers and the files in 
 Onym is free software under the GPL, version 3 or later. See `COPYING`.
 
 - WordNet is provided by Princeton University under its own permissive licence. Its notice ships with
-  the bundled database, which comes from Debian's wordnet-base package with Debian's fixes.
+  the bundled data, which comes from the `onym-data` submodule (the base graph is Debian's
+  wordnet-base 3.0 build).
 - The lookup engine is onym-engine, GPL-3.0-or-later, whose behaviour derives from Artha by
   Sundaram Ramaswamy; the derivation is recorded in that repository's PROVENANCE.md.
 - Onym is built with GTK, libadwaita, and GLib from the GNOME project.

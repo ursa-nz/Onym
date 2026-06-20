@@ -22,17 +22,19 @@ Onym uses Meson. On Debian or Ubuntu, install the dependencies:
 sudo apt install meson ninja-build gcc pkg-config \
   libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
   gobject-introspection libgirepository1.0-dev \
-  wordnet-base
+  zstd
 ```
 
 The lookup engine builds from a sibling checkout of
-[onym-engine](https://forge.ursa.nz/ursa-nz/onym-engine), so clone it next to this repository
-(`-Donym_engine_dir` points elsewhere) and have cargo on your PATH; a rustup install honours the
-engine's pinned toolchain.
+[onym-engine](https://forge.ursa.nz/ursa-nz/onym-engine), so clone it next to this repository as
+`../core` (`-Donym_engine_dir` points elsewhere) and have cargo on your PATH; a rustup install
+honours the engine's pinned toolchain. The WordNet data comes from the `onym-data` submodule, which
+meson prepares into the build tree, so initialise it first.
 
 Then configure and build:
 
 ```
+git submodule update --init
 meson setup _build
 meson compile -C _build
 meson test -C _build
@@ -47,16 +49,17 @@ it like this:
 GSETTINGS_SCHEMA_DIR=$PWD/_build/data ./_build/src/onym
 ```
 
-The WordNet database is expected at `/usr/share/wordnet`, which the `wordnet-base` package provides.
-There is also a headless tool, `./_build/tools/onym-cli WORD`, which prints the full result for a
-word, including the relation trees. It is the quickest way to check the engine without the interface.
+The WordNet data is prepared from the `onym-data` submodule into the build tree by meson, so run
+`git submodule update --init` before configuring. There is also a headless tool,
+`./_build/tools/onym-cli WORD`, which prints the full result for a word, including the relation
+trees. It is the quickest way to check the engine without the interface.
 
 ## Tests
 
 Run the suite with `meson test -C _build`. There are two suites. The first covers the pure helper
 functions and needs no data, so it always runs. The second exercises real lookups and skips itself
-when the WordNet database is absent. Add a test with any change that fixes a bug or adds behaviour to
-the library, and keep the suite green.
+when the prepared WordNet data is absent. Add a test with any change that fixes a bug or adds
+behaviour to the library, and keep the suite green.
 
 ## How the code is organised
 

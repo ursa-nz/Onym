@@ -77,6 +77,6 @@ entry, each run when its tool is present.
 ## Packaging
 
 The `data/` directory holds the GSettings schema, the icons, the desktop entry, and the AppStream
-metainfo. For distribution, the Flatpak manifest in `build-aux/` bundles the WordNet database from
-Debian's prebuilt wordnet-base package, so the application needs nothing installed; the engine is
-compiled into the binary, so nothing else of WordNet ships.
+metainfo. For distribution, the Flatpak manifest in `build-aux/` bundles the WordNet data from the
+`onym-data` submodule, so the application needs nothing installed and the builder fetches no
+database; the engine is compiled into the binary, so nothing else of WordNet ships.
