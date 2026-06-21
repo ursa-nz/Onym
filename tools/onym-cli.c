@@ -108,6 +108,33 @@ print_tree (GListModel *items)
 }
 
 static void
+print_translations (GListModel *items)
+{
+  guint n = g_list_model_get_n_items (items);
+  for (guint i = 0; i < n; i++)
+    {
+      OnymSenseTranslations *sense = g_list_model_get_item (items, i);
+      const char *pos = onym_sense_translations_get_pos (sense);
+      if (pos != NULL)
+        g_print ("  - (%s) %s\n", pos, onym_sense_translations_get_gloss (sense));
+      else
+        g_print ("  - %s\n", onym_sense_translations_get_gloss (sense));
+
+      GListModel *languages = onym_sense_translations_get_languages (sense);
+      guint nl = g_list_model_get_n_items (languages);
+      for (guint l = 0; l < nl; l++)
+        {
+          OnymLanguageWords *lang = g_list_model_get_item (languages, l);
+          char *joined = g_strjoinv (", ", (char **) onym_language_words_get_words (lang));
+          g_print ("      %s: %s\n", onym_language_words_get_language (lang), joined);
+          g_free (joined);
+          g_object_unref (lang);
+        }
+      g_object_unref (sense);
+    }
+}
+
+static void
 render_result (OnymResult *result)
 {
   g_print ("term: %s\n", onym_result_get_term (result));
@@ -134,6 +161,9 @@ render_result (OnymResult *result)
           break;
         case ONYM_SECTION_TREE:
           print_tree (items);
+          break;
+        case ONYM_SECTION_TRANSLATIONS:
+          print_translations (items);
           break;
         default:
           break;

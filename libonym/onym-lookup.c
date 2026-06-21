@@ -84,6 +84,24 @@ add_tree (OnymResult *out, const OnymCoreSection *section)
   onym_result_add_section (out, built);
 }
 
+static void
+add_translations (OnymResult *out, const OnymCoreSection *section)
+{
+  OnymSection *built = onym_section_new (ONYM_SECTION_TRANSLATIONS, section->title);
+  for (size_t i = 0; i < section->n_items; i++)
+    {
+      const OnymCoreSenseTranslations *block = &section->translations[i];
+      OnymSenseTranslations *sense = onym_sense_translations_new (block->pos, block->gloss);
+      for (size_t l = 0; l < block->n_languages; l++)
+        {
+          const OnymCoreLanguageWords *lang = &block->languages[l];
+          onym_sense_translations_add_language (sense, lang->language, strv_copy (lang->words));
+        }
+      onym_section_add (built, sense);
+    }
+  onym_result_add_section (out, built);
+}
+
 OnymResult *
 onym_bridge_lookup (const OnymCoreEngine *core, const char *query)
 {
@@ -114,6 +132,9 @@ onym_bridge_lookup (const OnymCoreEngine *core, const char *query)
           break;
         case ONYM_CORE_SECTION_ETYMOLOGY:
           add_word_section (out, section, ONYM_SECTION_ETYMOLOGY);
+          break;
+        case ONYM_CORE_SECTION_TRANSLATIONS:
+          add_translations (out, section);
           break;
         default:
           break;

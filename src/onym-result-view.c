@@ -351,6 +351,85 @@ make_prose (GListModel *items)
   return GTK_WIDGET (box);
 }
 
+/* Sense translations: one block per looked-up sense. Each block names its meaning with the same
+ * dimmed part of speech and gloss a definition shows, then lists, per language, the words other
+ * languages use for it. The words are plain selectable text rather than chips, because a foreign
+ * word is not an English headword to navigate to. The languages read as a definition list so a
+ * screen reader pairs each language name with its words. */
+static GtkWidget *
+make_translations (GListModel *items)
+{
+  GtkBox *box = GTK_BOX (g_object_new (GTK_TYPE_BOX,
+                                       "orientation", GTK_ORIENTATION_VERTICAL,
+                                       "spacing", 12,
+                                       "accessible-role", GTK_ACCESSIBLE_ROLE_LIST,
+                                       NULL));
+
+  guint n = g_list_model_get_n_items (items);
+  for (guint i = 0; i < n; i++)
+    {
+      OnymSenseTranslations *sense = g_list_model_get_item (items, i);
+      GtkBox *row = GTK_BOX (g_object_new (GTK_TYPE_BOX,
+                                           "orientation", GTK_ORIENTATION_VERTICAL,
+                                           "spacing", 3,
+                                           "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM,
+                                           NULL));
+
+      GtkWidget *gloss = gtk_label_new (NULL);
+      gtk_label_set_wrap (GTK_LABEL (gloss), TRUE);
+      gtk_label_set_xalign (GTK_LABEL (gloss), 0.0);
+      gtk_label_set_selectable (GTK_LABEL (gloss), TRUE);
+      const char *pos = onym_sense_translations_get_pos (sense);
+      char *gloss_esc = g_markup_escape_text (onym_sense_translations_get_gloss (sense), -1);
+      char *markup;
+      if (pos != NULL)
+        {
+          char *pos_esc = g_markup_escape_text (pos, -1);
+          markup = g_strdup_printf ("<span alpha='60%%'>%s</span>  %s", pos_esc, gloss_esc);
+          g_free (pos_esc);
+        }
+      else
+        {
+          markup = g_strdup (gloss_esc);
+        }
+      gtk_label_set_markup (GTK_LABEL (gloss), markup);
+      g_free (markup);
+      g_free (gloss_esc);
+      gtk_box_append (row, gloss);
+
+      GListModel *languages = onym_sense_translations_get_languages (sense);
+      guint nl = g_list_model_get_n_items (languages);
+      for (guint l = 0; l < nl; l++)
+        {
+          OnymLanguageWords *lang = g_list_model_get_item (languages, l);
+          char *joined = g_strjoinv (", ", (char **) onym_language_words_get_words (lang));
+          char *name_esc = g_markup_escape_text (onym_language_words_get_language (lang), -1);
+          char *words_esc = g_markup_escape_text (joined, -1);
+          char *line_markup = g_strdup_printf ("<span alpha='60%%'>%s</span>  %s", name_esc, words_esc);
+
+          GtkWidget *line = g_object_new (GTK_TYPE_LABEL,
+                                          "wrap", TRUE,
+                                          "xalign", 0.0,
+                                          "selectable", TRUE,
+                                          "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM,
+                                          NULL);
+          gtk_label_set_markup (GTK_LABEL (line), line_markup);
+          gtk_widget_set_margin_start (line, 18);
+          gtk_box_append (row, line);
+
+          g_free (line_markup);
+          g_free (words_esc);
+          g_free (name_esc);
+          g_free (joined);
+          g_object_unref (lang);
+        }
+
+      gtk_box_append (box, GTK_WIDGET (row));
+      g_object_unref (sense);
+    }
+  return GTK_WIDGET (box);
+}
+
 /* A node's synset terms, each as a clickable chip. The relation is carried by the enclosing tree
  * item, so the chips themselves stay unadorned and a screen reader does not repeat it per term. */
 static GtkWidget *
@@ -525,6 +604,9 @@ onym_result_view_set_result (OnymResultView *self, OnymResult *result)
           break;
         case ONYM_SECTION_ETYMOLOGY:
           gtk_box_append (self->box, make_prose (onym_section_get_items (section)));
+          break;
+        case ONYM_SECTION_TRANSLATIONS:
+          gtk_box_append (self->box, make_translations (onym_section_get_items (section)));
           break;
         default:
           break;

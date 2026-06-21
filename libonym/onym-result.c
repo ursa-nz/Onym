@@ -16,7 +16,8 @@ G_DEFINE_ENUM_TYPE (OnymSectionKind, onym_section_kind,
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_WORDS, "words"),
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_ANTONYMS, "antonyms"),
                     G_DEFINE_ENUM_VALUE (ONYM_SECTION_TREE, "tree"),
-                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_ETYMOLOGY, "etymology"))
+                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_ETYMOLOGY, "etymology"),
+                    G_DEFINE_ENUM_VALUE (ONYM_SECTION_TRANSLATIONS, "translations"))
 
 /* OnymWord */
 
@@ -361,6 +362,178 @@ onym_tree_node_get_children (OnymTreeNode *self)
   return G_LIST_MODEL (self->children);
 }
 
+/* OnymLanguageWords */
+
+struct _OnymLanguageWords
+{
+  GObject parent_instance;
+  char *language;
+  GStrv words;
+};
+
+G_DEFINE_FINAL_TYPE (OnymLanguageWords, onym_language_words, G_TYPE_OBJECT)
+
+static void
+onym_language_words_finalize (GObject *object)
+{
+  OnymLanguageWords *self = ONYM_LANGUAGE_WORDS (object);
+
+  g_free (self->language);
+  g_strfreev (self->words);
+
+  G_OBJECT_CLASS (onym_language_words_parent_class)->finalize (object);
+}
+
+static void
+onym_language_words_class_init (OnymLanguageWordsClass *klass)
+{
+  G_OBJECT_CLASS (klass)->finalize = onym_language_words_finalize;
+}
+
+static void
+onym_language_words_init (OnymLanguageWords *self)
+{
+}
+
+OnymLanguageWords *
+onym_language_words_new (const char *language, GStrv words)
+{
+  OnymLanguageWords *self = g_object_new (ONYM_TYPE_LANGUAGE_WORDS, NULL);
+  self->language = g_strdup (language);
+  self->words = words; /* (transfer full) */
+  return self;
+}
+
+/**
+ * onym_language_words_get_language:
+ * @self: an OnymLanguageWords
+ *
+ * The language's display name.
+ *
+ * Returns: (transfer none): the language name
+ */
+const char *
+onym_language_words_get_language (OnymLanguageWords *self)
+{
+  g_return_val_if_fail (ONYM_IS_LANGUAGE_WORDS (self), NULL);
+  return self->language;
+}
+
+/**
+ * onym_language_words_get_words:
+ * @self: an OnymLanguageWords
+ *
+ * The words this language uses for the sense, plain display text.
+ *
+ * Returns: (transfer none) (array zero-terminated=1): the words
+ */
+const char * const *
+onym_language_words_get_words (OnymLanguageWords *self)
+{
+  g_return_val_if_fail (ONYM_IS_LANGUAGE_WORDS (self), NULL);
+  return (const char * const *) self->words;
+}
+
+/* OnymSenseTranslations */
+
+struct _OnymSenseTranslations
+{
+  GObject parent_instance;
+  char *pos;
+  char *gloss;
+  GListStore *languages; /* of OnymLanguageWords */
+};
+
+G_DEFINE_FINAL_TYPE (OnymSenseTranslations, onym_sense_translations, G_TYPE_OBJECT)
+
+static void
+onym_sense_translations_finalize (GObject *object)
+{
+  OnymSenseTranslations *self = ONYM_SENSE_TRANSLATIONS (object);
+
+  g_free (self->pos);
+  g_free (self->gloss);
+  g_clear_object (&self->languages);
+
+  G_OBJECT_CLASS (onym_sense_translations_parent_class)->finalize (object);
+}
+
+static void
+onym_sense_translations_class_init (OnymSenseTranslationsClass *klass)
+{
+  G_OBJECT_CLASS (klass)->finalize = onym_sense_translations_finalize;
+}
+
+static void
+onym_sense_translations_init (OnymSenseTranslations *self)
+{
+  self->languages = g_list_store_new (ONYM_TYPE_LANGUAGE_WORDS);
+}
+
+OnymSenseTranslations *
+onym_sense_translations_new (const char *pos, const char *gloss)
+{
+  OnymSenseTranslations *self = g_object_new (ONYM_TYPE_SENSE_TRANSLATIONS, NULL);
+  self->pos = g_strdup (pos);
+  self->gloss = g_strdup (gloss);
+  return self;
+}
+
+void
+onym_sense_translations_add_language (OnymSenseTranslations *self, const char *language, GStrv words)
+{
+  g_return_if_fail (ONYM_IS_SENSE_TRANSLATIONS (self));
+
+  OnymLanguageWords *item = onym_language_words_new (language, words);
+  g_list_store_append (self->languages, item);
+  g_object_unref (item);
+}
+
+/**
+ * onym_sense_translations_get_pos:
+ * @self: an OnymSenseTranslations
+ *
+ * The sense's part of speech, such as "noun", or %NULL when it has none.
+ *
+ * Returns: (transfer none) (nullable): the part of speech, or %NULL
+ */
+const char *
+onym_sense_translations_get_pos (OnymSenseTranslations *self)
+{
+  g_return_val_if_fail (ONYM_IS_SENSE_TRANSLATIONS (self), NULL);
+  return self->pos;
+}
+
+/**
+ * onym_sense_translations_get_gloss:
+ * @self: an OnymSenseTranslations
+ *
+ * The sense's gloss, the same text the Definitions section shows, naming the meaning.
+ *
+ * Returns: (transfer none): the gloss
+ */
+const char *
+onym_sense_translations_get_gloss (OnymSenseTranslations *self)
+{
+  g_return_val_if_fail (ONYM_IS_SENSE_TRANSLATIONS (self), NULL);
+  return self->gloss;
+}
+
+/**
+ * onym_sense_translations_get_languages:
+ * @self: an OnymSenseTranslations
+ *
+ * The words other languages use for this sense, grouped by language.
+ *
+ * Returns: (transfer none): the languages, a #GListModel of #OnymLanguageWords
+ */
+GListModel *
+onym_sense_translations_get_languages (OnymSenseTranslations *self)
+{
+  g_return_val_if_fail (ONYM_IS_SENSE_TRANSLATIONS (self), NULL);
+  return G_LIST_MODEL (self->languages);
+}
+
 /* OnymSection */
 
 struct _OnymSection
@@ -387,6 +560,8 @@ onym_section_item_type (OnymSectionKind kind)
       return ONYM_TYPE_ANTONYM;
     case ONYM_SECTION_TREE:
       return ONYM_TYPE_TREE_NODE;
+    case ONYM_SECTION_TRANSLATIONS:
+      return ONYM_TYPE_SENSE_TRANSLATIONS;
     default:
       g_assert_not_reached ();
     }

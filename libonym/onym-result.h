@@ -19,11 +19,12 @@ G_BEGIN_DECLS
  * items are, so it can pick a renderer without inspecting an item first. */
 typedef enum
 {
-  ONYM_SECTION_DEFINITIONS, /* items are OnymDefinition */
-  ONYM_SECTION_WORDS,       /* items are OnymWord */
-  ONYM_SECTION_ANTONYMS,    /* items are OnymAntonym */
-  ONYM_SECTION_TREE,        /* items are OnymTreeNode */
-  ONYM_SECTION_ETYMOLOGY,   /* items are OnymWord, each a prose paragraph, not a navigable term */
+  ONYM_SECTION_DEFINITIONS,  /* items are OnymDefinition */
+  ONYM_SECTION_WORDS,        /* items are OnymWord */
+  ONYM_SECTION_ANTONYMS,     /* items are OnymAntonym */
+  ONYM_SECTION_TREE,         /* items are OnymTreeNode */
+  ONYM_SECTION_ETYMOLOGY,    /* items are OnymWord, each a prose paragraph, not a navigable term */
+  ONYM_SECTION_TRANSLATIONS, /* items are OnymSenseTranslations, one per looked-up sense */
 } OnymSectionKind;
 
 GType onym_section_kind_get_type (void);
@@ -63,6 +64,24 @@ G_DECLARE_FINAL_TYPE (OnymTreeNode, onym_tree_node, ONYM, TREE_NODE, GObject)
 const char         *onym_tree_node_get_label    (OnymTreeNode *self);
 const char * const *onym_tree_node_get_terms    (OnymTreeNode *self);
 GListModel         *onym_tree_node_get_children (OnymTreeNode *self); /* of OnymTreeNode */
+
+/* OnymLanguageWords: one language's words for a sense. The words are the terms other languages use
+ * for the concept, plain display text rather than navigable headwords. */
+#define ONYM_TYPE_LANGUAGE_WORDS (onym_language_words_get_type ())
+G_DECLARE_FINAL_TYPE (OnymLanguageWords, onym_language_words, ONYM, LANGUAGE_WORDS, GObject)
+
+const char         *onym_language_words_get_language (OnymLanguageWords *self);
+const char * const *onym_language_words_get_words    (OnymLanguageWords *self);
+
+/* OnymSenseTranslations: one looked-up sense's translations. It carries the sense's part of speech
+ * and gloss, as the definitions do, so a consumer can name the meaning, and the words other languages
+ * use for it grouped by language. */
+#define ONYM_TYPE_SENSE_TRANSLATIONS (onym_sense_translations_get_type ())
+G_DECLARE_FINAL_TYPE (OnymSenseTranslations, onym_sense_translations, ONYM, SENSE_TRANSLATIONS, GObject)
+
+const char *onym_sense_translations_get_pos       (OnymSenseTranslations *self);
+const char *onym_sense_translations_get_gloss     (OnymSenseTranslations *self);
+GListModel *onym_sense_translations_get_languages (OnymSenseTranslations *self); /* of OnymLanguageWords */
 
 /* OnymSection: a titled group of items of one kind. */
 #define ONYM_TYPE_SECTION (onym_section_get_type ())

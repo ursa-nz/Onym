@@ -23,6 +23,13 @@ void         onym_antonym_add_implication (OnymAntonym *self, const char *term);
 OnymTreeNode *onym_tree_node_new       (GStrv terms); /* (transfer full) terms */
 void          onym_tree_node_add_child (OnymTreeNode *self, OnymTreeNode *child); /* (transfer full) */
 
+OnymLanguageWords *onym_language_words_new (const char *language, GStrv words); /* (transfer full) words */
+
+OnymSenseTranslations *onym_sense_translations_new          (const char *pos, const char *gloss);
+void                   onym_sense_translations_add_language (OnymSenseTranslations *self,
+                                                             const char *language,
+                                                             GStrv words); /* (transfer full) words */
+
 OnymSection *onym_section_new (OnymSectionKind kind, const char *title);
 void         onym_section_add (OnymSection *self, gpointer item); /* (transfer full) */
 
