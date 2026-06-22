@@ -25,15 +25,18 @@ jobs:
             meson ninja-build gcc pkg-config \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
             gobject-introspection libgirepository1.0-dev \
-            wordnet-base pipx \
+            zstd pipx \
             gettext appstream desktop-file-utils
 
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      # The lookup engine builds from the sibling onym-engine checkout, the same convention its
-      # conformance kit uses.
+      # The lookup engine builds from the sibling core checkout, the same convention its conformance
+      # kit uses. The data comes from the onym-data submodule, which meson materialises with
+      # prepare.sh (zstd above), so no system WordNet is installed.
       - name: Check out onym-engine
-        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
+        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../core
 
       # Ubuntu 24.04's rustc predates edition 2024, so install the stable toolchain with rustup;
       # cargo then honours the engine's rust-toolchain.toml pin.
@@ -83,10 +86,13 @@ jobs:
       options: --privileged
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      # The manifest stages the engine from the sibling checkout.
+      # The manifest stages the engine from the sibling checkout and the data from the onym-data
+      # submodule above.
       - name: Check out onym-engine
-        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
+        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../core
 
       # Build against the system installation, where the image has baked the GNOME 50 runtime and
       # Sdk, rather than the per-user one, which is empty and has no remote (the runner sets HOME to

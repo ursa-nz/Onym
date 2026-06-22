@@ -44,8 +44,8 @@ DESTDIR="$appdir" meson install -C "${work}/build"
 rm -rf "${appdir}/usr/include" "${appdir}/usr/lib/"*/pkgconfig
 find "${appdir}/usr/lib" -name 'libonym.a' -delete 2>/dev/null || true
 
-# 2. Bundle the pinned WordNet data from the onym-data submodule, base graph and
-#    etymology overlay together, with no network.
+# 2. Bundle the pinned WordNet data from the onym-data submodule, the base graph
+#    and the etymology and translation overlays together, with no network.
 install -d "${appdir}/usr/share/wordnet"
 "${root}/onym-data/prepare.sh" "${appdir}/usr/share/wordnet"
 

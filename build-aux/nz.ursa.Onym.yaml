@@ -22,9 +22,9 @@ cleanup:
   - '*.la'
 
 modules:
-  # The pinned WordNet data from the onym-data submodule, the base graph and the etymology overlay
-  # together, bundled so the app needs nothing installed and the builder fetches nothing at build
-  # time. prepare.sh decompresses the vendored blob in place, with no network.
+  # The pinned WordNet data from the onym-data submodule, the base graph and the etymology and
+  # translation overlays together, bundled so the app needs nothing installed and the builder fetches
+  # nothing at build time. prepare.sh decompresses the vendored blobs in place, with no network.
   - name: wordnet-data
     buildsystem: simple
     build-commands:

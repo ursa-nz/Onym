@@ -17,10 +17,11 @@ word is misspelt. On wide windows a sidebar lists more words: the headwords that
 one and the other completions of its letters, each a click away. A dice button (or Ctrl+R) jumps to
 a random word, and a right click (or the Menu key) copies any word title or chip as plain text.
 
-The word data comes from WordNet, the lexical database from Princeton University. The lookup engine
-is [onym-engine](https://forge.ursa.nz/ursa-nz/onym-engine), a shared Rust core whose behaviour
-derives from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy. Onym is a fresh GTK4 and
-libadwaita application around that engine, built to feel at home on GNOME 50 and later.
+The word data comes from Open English WordNet, the actively maintained successor to Princeton's
+WordNet, with word origins from Wiktionary and translations from the Open Multilingual Wordnet. The
+lookup engine is [onym-engine](https://forge.ursa.nz/ursa-nz/onym-engine), a shared Rust core whose
+behaviour derives from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy. Onym is a fresh
+GTK4 and libadwaita application around that engine, built to feel at home on GNOME 50 and later.
 
 ## Status
 
@@ -88,9 +89,12 @@ parses anything itself. `ARCHITECTURE.md` describes the layers and the files in 
 
 Onym is free software under the GPL, version 3 or later. See `COPYING`.
 
-- WordNet is provided by Princeton University under its own permissive licence. Its notice ships with
-  the bundled data, which comes from the `onym-data` submodule (the base graph is Debian's
-  wordnet-base 3.0 build).
+- The word data is Open English WordNet 2025, under CC-BY-4.0, with the Princeton WordNet grant
+  preserved. It is bundled from the `onym-data` submodule, which carries the full provenance.
+- Etymology comes from Wiktionary, under CC-BY-SA-3.0, via the wiktextract dataset.
+- Translations come from the Open Multilingual Wordnet: MultiWordNet (Italian, CC-BY-3.0), Wordnet
+  Bahasa (Indonesian, MIT), and OpenWN-PT (Portuguese, CC-BY-SA-3.0), aligned through the
+  Collaborative Interlingual Index (CC-BY-4.0).
 - The lookup engine is onym-engine, GPL-3.0-or-later, whose behaviour derives from Artha by
   Sundaram Ramaswamy; the derivation is recorded in that repository's PROVENANCE.md.
 - Onym is built with GTK, libadwaita, and GLib from the GNOME project.

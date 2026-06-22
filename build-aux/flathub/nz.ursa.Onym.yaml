@@ -28,8 +28,8 @@ cleanup:
   - '*.la'
 
 modules:
-  # The pinned WordNet data from onym-data, the base graph and the etymology overlay together,
-  # bundled so the app needs nothing installed. Flathub's builders fetch sources before the
+  # The pinned WordNet data from onym-data, the base graph and the etymology and translation overlays
+  # together, bundled so the app needs nothing installed. Flathub's builders fetch sources before the
   # network-isolated build, so a pinned public revision is fetched here and prepare.sh decompresses
   # it in place; nothing is reached for at build time. Bump the commit alongside data releases.
   - name: wordnet-data

@@ -8,55 +8,14 @@ on:
   pull_request:
 
 jobs:
-  # A native Debian/Ubuntu package, built with debhelper. libonym is static, so
-  # the package is just the application and its data; it depends on the system
-  # WordNet. Built on 26.04 to match the changelog series.
-  deb:
-    runs-on: ubuntu-latest
-    container: ubuntu:26.04
-    steps:
-      - name: Install build dependencies
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            ca-certificates git nodejs \
-            build-essential debhelper meson ninja-build pkgconf \
-            libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
-            cargo rustc wordnet-base \
-            appstream desktop-file-utils lintian
-
-      - uses: actions/checkout@v4
-
-      # The lookup engine builds from the sibling onym-engine checkout.
-      - name: Check out onym-engine
-        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
-
-      - name: Build the .deb
-        run: dpkg-buildpackage -us -uc -b
-
-      - name: Lint the .deb
-        run: lintian ../onym_*.deb || true
-
-      - name: Collect the artifact
-        run: |
-          mkdir -p dist
-          cp ../onym_*.deb dist/
-
-      - name: Upload the .deb
-        uses: actions/upload-artifact@v3
-        with:
-          name: onym_amd64.deb
-          path: dist/*.deb
-
-  # A portable AppImage that bundles GTK4, libadwaita, the WordNet runtime and
-  # the WordNet database. Built on 26.04 so it bundles the GNOME 50 toolkit
-  # (GTK 4.22 / libadwaita 1.9), matching the Flatpak runtime and current
-  # desktops. This raises the glibc floor, an accepted trade-off: older systems
-  # have the .deb, the Flatpak, or upstream Artha. dpkg-dev provides
-  # dpkg-architecture, which linuxdeploy-plugin-gtk calls to locate the multiarch
-  # library directory and aborts without. librsvg2-common ships the SVG pixbuf
-  # loader the icon needs and libgdk-pixbuf2.0-bin the gdk-pixbuf-query-loaders
-  # tool the plugin runs to register it in the bundle.
+  # A portable AppImage that bundles GTK4, libadwaita and the pinned WordNet data, so it runs on any
+  # reasonably current Linux desktop with nothing installed. Built on 26.04 so it bundles the GNOME
+  # 50 toolkit (GTK 4.22 / libadwaita 1.9), matching the Flatpak runtime and current desktops. This
+  # raises the glibc floor, an accepted trade-off: older systems have the Flatpak or upstream Artha.
+  # dpkg-dev provides dpkg-architecture, which linuxdeploy-plugin-gtk calls to locate the multiarch
+  # library directory and aborts without. librsvg2-common ships the SVG pixbuf loader the icon needs
+  # and libgdk-pixbuf2.0-bin the gdk-pixbuf-query-loaders tool the plugin runs to register it. zstd
+  # is what prepare.sh uses to decompress the bundled data; there is no system WordNet.
   appimage:
     runs-on: ubuntu-latest
     container: ubuntu:26.04
@@ -65,17 +24,20 @@ jobs:
         run: |
           apt-get update
           apt-get install -y --no-install-recommends \
-            ca-certificates curl file git nodejs \
+            ca-certificates curl file git nodejs zstd \
             meson ninja-build gcc pkgconf gettext dpkg-dev \
             libglib2.0-dev libgtk-4-dev libadwaita-1-dev \
-            cargo rustc wordnet-base \
+            cargo rustc \
             librsvg2-common libgdk-pixbuf2.0-bin
 
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      # The lookup engine builds from the sibling onym-engine checkout.
+      # The lookup engine builds from the sibling core checkout; the data comes from the onym-data
+      # submodule, which build-appimage.sh materialises with prepare.sh.
       - name: Check out onym-engine
-        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../onym-engine
+        run: git clone --depth 1 https://forge.ursa.nz/ursa-nz/onym-engine.git ../core
 
       - name: Build the AppImage
         run: ./build-aux/appimage/build-appimage.sh
@@ -86,15 +48,14 @@ jobs:
           name: Onym-x86_64.AppImage
           path: Onym-*.AppImage
 
-  # On a version tag, publish the .deb and the AppImage as a Forgejo release. The
-  # software.ursa.nz publisher imports release assets from this forge, so this job is what
-  # carries a tagged version into the apt repository; without it a tag ships only from
-  # GitHub and the repositories quietly fall behind. The release body comes from the
-  # version's metainfo entry via build-aux/release-notes. The Flatpak bundle is still built
-  # locally with flatpak-builder and attached by hand, because the runner has no Flatpak
-  # runtimes; the publisher picks up late-attached assets on its next pass.
+  # On a version tag, publish the AppImage as a Forgejo release. The software.ursa.nz publisher
+  # imports release assets from this forge, so this job is what carries a tagged version into the
+  # download page; without it a tag ships only from GitHub and the two quietly fall behind. The
+  # release body comes from the version's metainfo entry via build-aux/release-notes. The Flatpak
+  # bundle is still built locally with flatpak-builder and attached by hand, because the runner has
+  # no Flatpak runtimes; the publisher picks up late-attached assets on its next pass.
   release:
-    needs: [deb, appimage]
+    needs: [appimage]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     container: ubuntu:26.04

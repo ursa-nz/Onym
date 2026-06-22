@@ -61,9 +61,8 @@ ever sees an explicit directory, which it reads in place, read-only. Lookups, co
 suggestions all delegate to the core, so the lemma index loads once inside it.
 
 The core is immutable after open and safe for concurrent reads, but the engine object opens it
-lazily without locking, so calls on one engine stay on one thread. Lookups read a local database
-and return in well under a millisecond, so in practice the work stays on the main thread and this
-is not a constraint.
+lazily without locking, so calls on one engine stay on one thread. Lookups return in well under a
+millisecond, so they stay on the main thread in practice.
 
 ## Tests
 
@@ -77,6 +76,6 @@ entry, each run when its tool is present.
 ## Packaging
 
 The `data/` directory holds the GSettings schema, the icons, the desktop entry, and the AppStream
-metainfo. For distribution, the Flatpak manifest in `build-aux/` bundles the WordNet data from the
-`onym-data` submodule, so the application needs nothing installed and the builder fetches no
+metainfo. For distribution, the Flatpak and AppImage recipes in `build-aux/` bundle the WordNet data
+from the `onym-data` submodule, so the application needs nothing installed and the builder fetches no
 database; the engine is compiled into the binary, so nothing else of WordNet ships.
