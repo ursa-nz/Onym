@@ -5,7 +5,7 @@ version = 1
 
 # Config files and data that cannot carry, or do not warrant, an inline header.
 [[annotations]]
-path = [".gitignore", ".editorconfig", ".clang-format", "COPYING", "po/**", "data/screenshots/**", "data/icons/hicolor/scalable/apps/nz.ursa.Onym.svg"]
+path = [".gitignore", ".editorconfig", ".gitmodules", ".clang-format", "COPYING", "po/**", "data/screenshots/**", "data/icons/hicolor/scalable/apps/nz.ursa.Onym.svg"]
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 ursa.nz <code@ursa.nz>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
@@ -18,10 +18,3 @@ path = "data/etym.onym"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "© Wiktionary contributors (https://en.wiktionary.org)"
 SPDX-License-Identifier = "CC-BY-SA-3.0"
-
-# Debian packaging files, which keep to their own formats and carry no inline header.
-[[annotations]]
-path = ["debian/changelog", "debian/control", "debian/copyright", "debian/not-installed", "debian/onym.install", "debian/source/format"]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "2026 ursa.nz <code@ursa.nz>"
-SPDX-License-Identifier = "GPL-3.0-or-later"
