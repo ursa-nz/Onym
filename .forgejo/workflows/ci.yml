@@ -50,8 +50,12 @@ jobs:
         # charset-normalizer extra so the install is self-contained.
         run: pipx run --spec 'reuse[charset-normalizer]' reuse lint
 
+      # The container runs git as a different user than owns the checkout, so clear the ownership
+      # guard before the submodule call.
       - name: Check out the onym-data submodule
-        run: git submodule update --init
+        run: |
+          git config --global --add safe.directory '*'
+          git submodule update --init
 
       - name: Configure
         run: meson setup _build
