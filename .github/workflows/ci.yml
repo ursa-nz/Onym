@@ -30,12 +30,11 @@ jobs:
             gettext appstream desktop-file-utils
 
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       # The lookup engine builds from the sibling core checkout, the same convention its conformance
       # kit uses. The data comes from the onym-data submodule, which meson materialises with
-      # prepare.sh (zstd above), so no system WordNet is installed.
+      # prepare.sh (zstd above), so no system WordNet is installed. The submodule is initialised
+      # after the REUSE lint below, so the lint sees only this repository's own files.
       - name: Check out onym-engine
         run: git clone --depth 1 https://github.com/ursa-nz/onym-engine ../core
 
@@ -51,6 +50,9 @@ jobs:
         # to start without an encoding-detection module. Pull the
         # charset-normalizer extra so the install is self-contained.
         run: pipx run --spec 'reuse[charset-normalizer]' reuse lint
+
+      - name: Check out the onym-data submodule
+        run: git submodule update --init
 
       - name: Configure
         run: meson setup _build
