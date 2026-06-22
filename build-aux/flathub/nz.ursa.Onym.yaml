@@ -39,7 +39,7 @@ modules:
     sources:
       - type: git
         url: https://forge.ursa.nz/ursa-nz/onym-data.git
-        commit: b6419c86b26422c47b27d1db9d370d414b60e5db
+        commit: f91841b052e494334c8d57e4b6b26b7b19f6993f
 
   - name: onym
     buildsystem: meson
@@ -60,8 +60,8 @@ modules:
       # the tag and commit on each release, or let the x-checker-data bot below propose it.
       - type: git
         url: https://forge.ursa.nz/ursa-nz/Onym.git
-        tag: v0.2.0
-        commit: 25083184bb6d0b4be4205dbfa657492ec4f52ff3
+        tag: v0.6.0
+        commit: bd2e3d73d4fe45fae4b754dc261db7bd0a9762bc
         disable-submodules: true
         x-checker-data:
           type: git
@@ -70,5 +70,5 @@ modules:
       # commit alongside engine releases.
       - type: git
         url: https://forge.ursa.nz/ursa-nz/onym-engine.git
-        commit: 9aa4733bad85e05e03f131ff85048fa2b5412dea
+        commit: 5537b26370091d22c424d1e03e6509c28dccf3fc
         dest: onym-engine
