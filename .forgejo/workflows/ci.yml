@@ -102,9 +102,15 @@ jobs:
 
       # Build against the system installation, where the image has baked the GNOME 50 runtime and
       # Sdk, rather than the per-user one, which is empty and has no remote (the runner sets HOME to
-      # a temporary directory). Add the flathub remote as a safety net so install-deps-from resolves
-      # if a dependency is missing. rofiles-fuse needs a FUSE device the runner may not grant, so
-      # disable it.
+      # a temporary directory). The image bakes the runtime and Sdk but not the Rust SDK extension,
+      # so install only that from flathub, pinned to the runtime's freedesktop base (25.08 for GNOME
+      # 50) and with --no-deps so flatpak does not pull the rest of the chain. We deliberately do not
+      # pass flatpak-builder --install-deps-from: once flathub publishes a newer runtime commit than
+      # the one baked in, that flag updates the baked runtime and Sdk, and the update hardlinks
+      # objects out of the image's read-only overlay layer, which the kernel refuses with EXDEV
+      # (logged as "Invalid cross-device link") and flatpak then segfaults. The baked runtime already
+      # satisfies the manifest, so we build against it untouched. rofiles-fuse needs a FUSE device the
+      # runner may not grant, so disable it.
       #
       # We self-host (not Flathub), so the metainfo keeps its forge.ursa.nz screenshot URLs and we do
       # not mirror them anywhere. compose-url-policy=full keeps those external URLs in the composed
@@ -113,7 +119,9 @@ jobs:
       - name: Build
         run: |
           flatpak remote-add --system --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak-builder --disable-rofiles-fuse --install-deps-from=flathub \
+          flatpak install --system -y --no-deps flathub \
+            org.freedesktop.Sdk.Extension.rust-stable//25.08
+          flatpak-builder --disable-rofiles-fuse \
             --compose-url-policy=full \
             --repo=repo --force-clean builddir build-aux/nz.ursa.Onym.yaml
 
