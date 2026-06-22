@@ -27,6 +27,20 @@ enum
 
 static guint signals[N_SIGNALS];
 
+/* A selectable GtkLabel selects its whole text whenever it takes the keyboard focus by anything but
+ * a click, so navigating to a word, or rebuilding the view under the focus chain, leaves the first
+ * gloss highlighted as if the user had chosen it. Setting the label selectable turns on focusability
+ * as a side effect; turning it back off keeps the pointer-driven selection a reader wants (drag to
+ * highlight, drag sets the selection through motion events, copy from the context menu) while taking
+ * the label out of the focus chain so nothing ever auto-selects it. */
+static GtkWidget *
+make_selectable_prose (GtkWidget *label)
+{
+  gtk_label_set_selectable (GTK_LABEL (label), TRUE);
+  gtk_widget_set_focusable (label, FALSE);
+  return label;
+}
+
 GtkWidget *
 onym_result_view_new (void)
 {
@@ -260,7 +274,7 @@ make_definitions (GListModel *items)
       GtkWidget *gloss = gtk_label_new (NULL);
       gtk_label_set_wrap (GTK_LABEL (gloss), TRUE);
       gtk_label_set_xalign (GTK_LABEL (gloss), 0.0);
-      gtk_label_set_selectable (GTK_LABEL (gloss), TRUE);
+      make_selectable_prose (gloss);
 
       const char *pos = onym_definition_get_pos (def);
       char *gloss_esc = g_markup_escape_text (onym_definition_get_gloss (def), -1);
@@ -286,7 +300,7 @@ make_definitions (GListModel *items)
           GtkWidget *example = gtk_label_new (NULL);
           gtk_label_set_wrap (GTK_LABEL (example), TRUE);
           gtk_label_set_xalign (GTK_LABEL (example), 0.0);
-          gtk_label_set_selectable (GTK_LABEL (example), TRUE);
+          make_selectable_prose (example);
           gtk_widget_set_margin_start (example, 18);
           gtk_widget_add_css_class (example, "dim-label");
 
@@ -325,9 +339,9 @@ make_prose (GListModel *items)
                                        "wrap", TRUE,
                                        "xalign", 0.0,
                                        "hexpand", TRUE,
-                                       "selectable", TRUE,
                                        "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM,
                                        NULL);
+      make_selectable_prose (label);
       if (n == 1)
         {
           gtk_box_append (box, label);
@@ -378,7 +392,7 @@ make_translations (GListModel *items)
       GtkWidget *gloss = gtk_label_new (NULL);
       gtk_label_set_wrap (GTK_LABEL (gloss), TRUE);
       gtk_label_set_xalign (GTK_LABEL (gloss), 0.0);
-      gtk_label_set_selectable (GTK_LABEL (gloss), TRUE);
+      make_selectable_prose (gloss);
       const char *pos = onym_sense_translations_get_pos (sense);
       char *gloss_esc = g_markup_escape_text (onym_sense_translations_get_gloss (sense), -1);
       char *markup;
@@ -410,9 +424,9 @@ make_translations (GListModel *items)
           GtkWidget *line = g_object_new (GTK_TYPE_LABEL,
                                           "wrap", TRUE,
                                           "xalign", 0.0,
-                                          "selectable", TRUE,
                                           "accessible-role", GTK_ACCESSIBLE_ROLE_LIST_ITEM,
                                           NULL);
+          make_selectable_prose (line);
           gtk_label_set_markup (GTK_LABEL (line), line_markup);
           gtk_widget_set_margin_start (line, 18);
           gtk_box_append (row, line);
@@ -613,6 +627,11 @@ onym_result_view_set_result (OnymResultView *self, OnymResult *result)
         }
       g_object_unref (section);
     }
+
+  /* Clearing the box above destroyed whatever chip the user clicked, so focus is now unset. Claim it
+   * for the headword so the new word reads first to a screen reader and the focus chain starts at the
+   * top of the entry rather than wherever the destroyed chip happened to sit. */
+  gtk_widget_grab_focus (headword);
 }
 
 static void
