@@ -9,12 +9,3 @@ path = [".gitignore", ".editorconfig", ".gitmodules", ".clang-format", "COPYING"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 ursa.nz <code@ursa.nz>"
 SPDX-License-Identifier = "GPL-3.0-or-later"
-
-# The etymology overlay, built from Wiktionary (via the wiktextract dataset) by onym-engine's
-# tools/etym-build and bundled into the self-contained packages. CC-BY-SA-3.0, not the project's
-# GPL, and a binary data file with no place for an inline header.
-[[annotations]]
-path = "data/etym.onym"
-precedence = "aggregate"
-SPDX-FileCopyrightText = "© Wiktionary contributors (https://en.wiktionary.org)"
-SPDX-License-Identifier = "CC-BY-SA-3.0"
