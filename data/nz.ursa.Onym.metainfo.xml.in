@@ -14,8 +14,8 @@ SPDX-License-Identifier: FSFAP
   <description>
     <p>Onym is a thesaurus for GNOME. Look a word up and Onym shows its synonyms and antonyms, then the lexical relations that connect it to other words: what it is a kind of, its kinds, and the wholes and parts it belongs to, each shown as a tree you can open.</p>
     <p>The synonyms, antonyms and the terms in the relation trees are clickable, so one lookup leads to the next with a click. Each entry also carries its meanings, grouped by part of speech and shown with example sentences, so the senses stay in view while you explore. Search is live, with completion as you type and a suggestion when a word is misspelt.</p>
-    <p>Where a word's origin is known, Onym shows its etymology, drawn from Wiktionary.</p>
-    <p>The word data comes from WordNet, the lexical database from Princeton University. Etymology comes from Wiktionary, under the CC-BY-SA-3.0 licence. The query engine is derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy.</p>
+    <p>Where a word's origin is known, Onym shows its etymology, drawn from Wiktionary. Where a sense has translations, Onym lists the words other languages use for it, grouped by language.</p>
+    <p>The word data comes from Open English WordNet 2025, under the CC-BY-4.0 licence, with the Princeton WordNet grant preserved. Etymology comes from Wiktionary, under the CC-BY-SA-3.0 licence. Translations come from the Open Multilingual Wordnet: MultiWordNet for Italian under CC-BY-3.0, Wordnet Bahasa for Indonesian under the MIT licence, and OpenWN-PT for Portuguese under CC-BY-SA-3.0, aligned through the Collaborative Interlingual Index under CC-BY-4.0. The query engine is derived from Artha, an earlier WordNet thesaurus by Sundaram Ramaswamy.</p>
   </description>
 
   <launchable type="desktop-id">nz.ursa.Onym.desktop</launchable>
@@ -46,6 +46,18 @@ SPDX-License-Identifier: FSFAP
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="0.6.0" date="2026-06-22">
+      <description>
+        <p>Translations.</p>
+        <ul>
+          <li>Entries now show translations: where a sense has them, the words other languages use for it, grouped by language.</li>
+          <li>Translations come from the Open Multilingual Wordnet, with MultiWordNet for Italian, Wordnet Bahasa for Indonesian, and OpenWN-PT for Portuguese, each credited under its own licence.</li>
+          <li>The word data is now Open English WordNet 2025, a larger and more current base than before.</li>
+          <li>The About dialog credits the translation sources and Open English WordNet.</li>
+          <li>Navigating between words no longer leaves the first definition highlighted.</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.4.1" date="2026-06-20">
       <description>
         <p>Word origins.</p>

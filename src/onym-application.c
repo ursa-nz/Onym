@@ -34,13 +34,20 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
 
   const char *developers[] = { "ursa.nz", NULL };
   const char *wordnet[] = {
+    "Open English WordNet, CC-BY-4.0 https://en-word.net",
     "Princeton University https://wordnet.princeton.edu",
-    "Debian WordNet maintainers https://tracker.debian.org/pkg/wordnet",
+    NULL,
+  };
+  const char *translations[] = {
+    "MultiWordNet, Italian, CC-BY-3.0 https://multiwordnet.fbk.eu",
+    "Wordnet Bahasa, Indonesian, MIT https://wn-msa.sourceforge.net",
+    "OpenWN-PT, Portuguese, CC-BY-SA-3.0 https://github.com/own-pt/openWordnet-PT",
+    "Collaborative Interlingual Index, CC-BY-4.0 https://github.com/globalwordnet/cili",
     NULL,
   };
   const char *artha[] = { "Sundaram Ramaswamy https://artha.sourceforge.net", NULL };
   const char *wiktionary[] = {
-    "Wiktionary contributors https://en.wiktionary.org",
+    "Wiktionary contributors, CC-BY-SA-3.0 https://en.wiktionary.org",
     "wiktextract by Tatu Ylonen https://kaikki.org",
     NULL,
   };
@@ -66,14 +73,18 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
   adw_about_dialog_add_link (about, "onym-engine", "https://forge.ursa.nz/ursa-nz/onym-engine");
   adw_about_dialog_set_comments (
     about,
-    "A thesaurus and dictionary built on WordNet, with word origins from Wiktionary. The lookup "
-    "engine is onym-engine, a shared Rust core whose behaviour derives from Artha, an earlier "
-    "WordNet thesaurus by Sundaram Ramaswamy, under the GPL.\n\n"
-    "Crafted on Kaurna Pangkarra and in Narrm, on Woiwurrung and Boonwurrung Country, with "
-    "respect to the Kaurna, Wurundjeri, and Bunurong peoples, their languages, and their "
-    "continuing connection to this Country.");
+    "A thesaurus and dictionary built on Open English WordNet, with word origins from Wiktionary "
+    "and translations from the Open Multilingual Wordnet. The lookup engine is onym-engine, a "
+    "shared Rust core whose behaviour derives from Artha, an earlier WordNet thesaurus by Sundaram "
+    "Ramaswamy, under the GPL.\n\n"
+    "Crafted on Kaurna Pangkarra, in Narrm on Woiwurrung and Boonwurrung Country, on Gadigal "
+    "Country, and in Canberra on Ngunnawal Country, with respect to the Kaurna, Wurundjeri, "
+    "Bunurong, Gadigal, and Ngunnawal peoples, their languages, and their continuing connection "
+    "to Country. Made by an Arrernte person, sovereign on Arrernte Country.");
   adw_about_dialog_set_developers (about, developers);
-  adw_about_dialog_add_acknowledgement_section (about, "Built on WordNet", wordnet);
+  adw_about_dialog_add_acknowledgement_section (about, "Built on Open English WordNet", wordnet);
+  adw_about_dialog_add_acknowledgement_section (about, "Translations from the Open Multilingual Wordnet",
+                                                translations);
   adw_about_dialog_add_acknowledgement_section (about, "Etymology from Wiktionary", wiktionary);
   adw_about_dialog_add_acknowledgement_section (about, "Engine derived from Artha", artha);
   adw_about_dialog_add_acknowledgement_section (about, "The shared Rust core", engine);
