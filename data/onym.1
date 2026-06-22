@@ -1,18 +1,20 @@
 .\" SPDX-FileCopyrightText: 2026 ursa.nz <code@ursa.nz>
 .\" SPDX-License-Identifier: GPL-3.0-or-later
-.TH ONYM 1 2026-06-07 "Onym 0.1.0" "User Commands"
+.TH ONYM 1 2026-06-22 "Onym 0.6.0" "User Commands"
 .SH NAME
-onym \- thesaurus and dictionary for GNOME built on WordNet
+onym \- thesaurus and dictionary for GNOME built on Open English WordNet
 .SH SYNOPSIS
 .B onym
 .RI [ word ]
 .SH DESCRIPTION
 .B Onym
-is a thesaurus and dictionary for GNOME, built on WordNet. It shows a word's
-meanings grouped by part of speech, with example sentences, then its synonyms,
-its antonyms, and the lexical relations that connect it to other words. Every
-word on screen is a link, so one lookup leads to the next with a click. Search
-is live, with completion as you type and a suggestion when a word is misspelt.
+is a thesaurus and dictionary for GNOME, built on Open English WordNet. It
+shows a word's meanings grouped by part of speech, with example sentences, then
+its synonyms, its antonyms, and the lexical relations that connect it to other
+words. Where they are known, it also shows a word's etymology and the words
+other languages use for each sense. Every word on screen is a link, so one
+lookup leads to the next with a click. Search is live, with completion as you
+type and a suggestion when a word is misspelt.
 .PP
 With no argument, Onym opens to its search field. Given a
 .IR word ,
@@ -20,15 +22,17 @@ it opens showing that word.
 .SH ENVIRONMENT
 .TP
 .B WNSEARCHDIR
-The directory holding the WordNet database. When it is unset, Onym falls back to
+The directory holding the word database. When it is unset, Onym falls back to
 .IR $WNHOME/dict ,
 then to the directory chosen at build time.
 .SH FILES
 .TP
-.I /usr/share/wordnet
-The WordNet database, as provided by the
-.B wordnet-base
-package.
+.I (build-time data directory)
+The word database: the Open English WordNet base and its etymology and
+translation overlays, prepared from the bundled onym-data project. The location
+is fixed at build time and is overridden by
+.B WNSEARCHDIR
+above. There is no system WordNet fallback.
 .SH SEE ALSO
 .BR wn (1)
 .SH AUTHOR

@@ -79,8 +79,8 @@ on_about_action (GSimpleAction *action, GVariant *parameter, gpointer user_data)
     "Ramaswamy, under the GPL.\n\n"
     "Crafted on Kaurna Pangkarra, in Narrm on Woiwurrung and Boonwurrung Country, on Gadigal "
     "Country, and in Canberra on Ngunnawal Country, with respect to the Kaurna, Wurundjeri, "
-    "Bunurong, Gadigal, and Ngunnawal peoples, their languages, and their continuing connection "
-    "to Country. Made by an Arrernte person, sovereign on Arrernte Country.");
+    "Bunurong, Gadigal, Dharug, and Ngunnawal peoples, their languages, and their continuing "
+    "connection to Country. Made by an Arrernte person, sovereign on Arrernte Country.");
   adw_about_dialog_set_developers (about, developers);
   adw_about_dialog_add_acknowledgement_section (about, "Built on Open English WordNet", wordnet);
   adw_about_dialog_add_acknowledgement_section (about, "Translations from the Open Multilingual Wordnet",
